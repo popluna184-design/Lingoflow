@@ -1,0 +1,2467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#4F46E5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LingoFlow">
+  <meta name="description" content="LingoFlow - AI-powered English learning companion">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <title>LingoFlow</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --primary: #4F46E5;
+      --primary-light: #EEF2FF;
+      --bubble-user: #4F46E5;
+      --bubble-ai: #F3F4F6;
+      --text-primary: #1F2937;
+      --text-secondary: #6B7280;
+      --bg: #FFFFFF;
+      --bg-chat: #F9FAFB;
+      --border: #E5E7EB;
+      --highlight-error: #EF4444;
+      --highlight-word: #10B981;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+      font-size: 16px;
+      color: var(--text-primary);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      background: var(--bg);
+    }
+
+    /* ── Header ── */
+    .header {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 16px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      z-index: 10;
+    }
+
+    .header-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: -0.3px;
+    }
+
+    .header-subtitle {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-left: 8px;
+      margin-top: 2px;
+    }
+
+    .btn-history {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-history:active {
+      background: var(--bg-chat);
+    }
+
+    .btn-settings {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-settings:active {
+      background: var(--bg-chat);
+    }
+
+    /* ── Settings Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      animation: fadeInOverlay 0.2s ease-out;
+    }
+
+    @keyframes fadeInOverlay {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .modal-overlay.closing {
+      animation: fadeOutOverlay 0.15s ease-in forwards;
+    }
+
+    @keyframes fadeOutOverlay {
+      from { opacity: 1; }
+      to   { opacity: 0; }
+    }
+
+    .modal {
+      background: var(--bg);
+      border-radius: 16px 16px 0 0;
+      width: 100%;
+      max-width: 480px;
+      padding: 20px 16px calc(20px + var(--safe-bottom));
+      animation: slideUp 0.25s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+
+    .modal-overlay.closing .modal {
+      animation: slideDown 0.15s ease-in forwards;
+    }
+
+    @keyframes slideDown {
+      from { transform: translateY(0); }
+      to   { transform: translateY(100%); }
+    }
+
+    .modal-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .modal-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-size: 14px;
+      outline: none;
+      background: var(--bg-chat);
+      color: var(--text-primary);
+      font-family: monospace;
+      transition: border-color 0.15s;
+    }
+
+    .modal-input:focus {
+      border-color: var(--primary);
+    }
+
+    .modal-hint {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .modal-hint a {
+      color: var(--primary);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .btn-cancel {
+      flex: 1;
+      padding: 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg);
+      color: var(--text-primary);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-save {
+      flex: 2;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #FFF;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .btn-save:active { opacity: 0.8; }
+    .btn-cancel:active { background: var(--bg-chat); }
+
+    .modal-select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-size: 14px;
+      outline: none;
+      background: var(--bg-chat);
+      color: var(--text-primary);
+      font-family: inherit;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .modal-select:focus {
+      border-color: var(--primary);
+    }
+
+    .modal-section {
+      margin-bottom: 16px;
+    }
+
+    .modal-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 4px 0 16px;
+    }
+
+    /* ── Notification Toast ── */
+    .toast {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 200;
+      animation: toastIn 0.25s ease-out;
+      pointer-events: none;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    .toast.success { background: #ECFDF5; color: #059669; }
+    .toast.error   { background: #FEF2F2; color: #DC2626; }
+
+    /* ── Chat Area ── */
+    .chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      background: var(--bg-chat);
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .chat-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      text-align: center;
+      padding: 32px;
+    }
+
+    .chat-empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.6;
+    }
+
+    .chat-empty-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .chat-empty-desc {
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 260px;
+    }
+
+    /* ── Message Bubbles ── */
+    .message {
+      display: flex;
+      flex-direction: column;
+      max-width: 85%;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+
+    .message.ai {
+      align-self: flex-start;
+      align-items: flex-start;
+    }
+
+    .bubble {
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-size: 15px;
+      line-height: 1.55;
+      word-break: break-word;
+      position: relative;
+    }
+
+    .message.user .bubble {
+      background: var(--bubble-user);
+      color: #FFFFFF;
+      border-bottom-right-radius: 6px;
+    }
+
+    .message.ai .bubble {
+      background: var(--bubble-ai);
+      color: var(--text-primary);
+      border-bottom-left-radius: 6px;
+    }
+
+    /* Highlight styles for AI corrections */
+    .hl-error {
+      color: #DC2626;
+      background: #FEF2F2;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-weight: 500;
+    }
+
+    .hl-word {
+      color: #059669;
+      background: #ECFDF5;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+
+    /* ── Play Button ── */
+    .msg-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .btn-play {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--bg);
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-play:active {
+      background: var(--primary-light);
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .btn-play.playing {
+      background: var(--primary-light);
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .btn-play svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .msg-time {
+      font-size: 11px;
+      color: var(--text-secondary);
+      opacity: 0.7;
+    }
+
+    /* ── Input Area ── */
+    .input-area {
+      flex-shrink: 0;
+      padding: 10px 12px calc(10px + var(--safe-bottom));
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .input-box {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 22px;
+      font-size: 15px;
+      line-height: 1.4;
+      resize: none;
+      outline: none;
+      background: var(--bg-chat);
+      color: var(--text-primary);
+      font-family: inherit;
+      transition: border-color 0.15s;
+      max-height: 100px;
+    }
+
+    .input-box:focus {
+      border-color: var(--primary);
+    }
+
+    .input-box::placeholder {
+      color: #9CA3AF;
+      font-size: 14px;
+    }
+
+    .btn-send {
+      flex-shrink: 0;
+      width: 42px;
+      height: 42px;
+      border: none;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #FFF;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.15s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-send:active {
+      transform: scale(0.93);
+    }
+
+    .btn-send:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    /* ── Microphone Button ── */
+    .btn-mic {
+      flex-shrink: 0;
+      width: 42px;
+      height: 42px;
+      border: 1.5px solid var(--border);
+      border-radius: 50%;
+      background: var(--bg);
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+    }
+
+    .btn-mic:active {
+      background: var(--bg-chat);
+    }
+
+    /* Hidden when browser doesn't support STT */
+    .btn-mic.unsupported {
+      display: none;
+    }
+
+    /* ── Recording state ── */
+    .btn-mic.recording {
+      background: #EF4444;
+      border-color: #EF4444;
+      color: #FFFFFF;
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+      animation: micPulse 1.6s ease-out infinite;
+    }
+
+    @keyframes micPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
+      70%  { box-shadow: 0 0 0 14px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    /* Recording wave bars inside the mic button */
+    .btn-mic .wave-bars {
+      display: none;
+      gap: 2px;
+      align-items: flex-end;
+      height: 16px;
+    }
+
+    .btn-mic.recording .mic-icon { display: none; }
+    .btn-mic.recording .wave-bars { display: flex; }
+
+    .wave-bar {
+      width: 3px;
+      border-radius: 2px;
+      background: #FFF;
+      animation: waveAnim 0.7s ease-in-out infinite alternate;
+    }
+    .wave-bar:nth-child(1) { height: 8px;  animation-delay: 0s; }
+    .wave-bar:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+    .wave-bar:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+    .wave-bar:nth-child(4) { height: 16px; animation-delay: 0.3s; }
+    .wave-bar:nth-child(5) { height: 9px;  animation-delay: 0.4s; }
+
+    @keyframes waveAnim {
+      0%   { transform: scaleY(0.5); opacity: 0.6; }
+      100% { transform: scaleY(1);   opacity: 1; }
+    }
+
+    /* ── Interim transcript hint ── */
+    .transcript-hint {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.78);
+      color: #FFF;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 10px;
+      white-space: nowrap;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .btn-mic.recording .transcript-hint {
+      opacity: 1;
+    }
+
+    /* ── Report Button ── */
+    .report-trigger-wrap {
+      flex-shrink: 0;
+      display: flex;
+      justify-content: center;
+      padding: 8px 16px 0;
+      background: var(--bg);
+    }
+
+    .btn-report {
+      width: 100%;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #FFF;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 2px 12px rgba(102, 126, 234, 0.35);
+      -webkit-tap-highlight-color: transparent;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-report::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .btn-report:active {
+      transform: scale(0.97);
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.55);
+    }
+
+    .btn-report:disabled {
+      opacity: 0.5;
+      cursor: default;
+      transform: none;
+    }
+
+    /* ── Report Bottom Sheet ── */
+    .sheet-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      z-index: 150;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      animation: fadeInOverlay 0.25s ease-out;
+    }
+
+    .sheet-overlay.closing {
+      animation: fadeOutOverlay 0.2s ease-in forwards;
+    }
+
+    .sheet {
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-width: 480px;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 0 20px calc(20px + var(--safe-bottom));
+      animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .sheet-overlay.closing .sheet {
+      animation: slideDown 0.2s ease-in forwards;
+    }
+
+    .sheet-handle {
+      width: 36px;
+      height: 5px;
+      background: #D1D5DB;
+      border-radius: 3px;
+      margin: 10px auto 0;
+    }
+
+    .sheet-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0 8px;
+      position: sticky;
+      top: 0;
+      background: inherit;
+      z-index: 2;
+    }
+
+    .sheet-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .btn-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.06);
+      color: var(--text-secondary);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      font-family: inherit;
+      line-height: 1;
+    }
+
+    .btn-close:active {
+      background: rgba(0,0,0,0.12);
+    }
+
+    /* ── Report Loading ── */
+    .report-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 20px;
+      gap: 20px;
+    }
+
+    .loading-spinner {
+      width: 44px;
+      height: 44px;
+      border: 4px solid #E5E7EB;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+
+    @keyframes dots {
+      0%   { content: ''; }
+      25%  { content: '.'; }
+      50%  { content: '..'; }
+      75%  { content: '...'; }
+      100% { content: ''; }
+    }
+
+    /* ── Report Content ── */
+    .report-content { display: none; }
+
+    /* Score Circle */
+    .score-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 0 20px;
+    }
+
+    .score-circle {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      position: relative;
+    }
+
+    .score-circle::before {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      background: conic-gradient(#667eea calc(var(--score-pct) * 1%), #E5E7EB 0);
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 5px));
+      mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 5px));
+    }
+
+    .score-num {
+      font-size: 36px;
+      color: #4F46E5;
+      line-height: 1;
+    }
+
+    .score-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .score-summary {
+      text-align: center;
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-top: 12px;
+      padding: 0 10px;
+    }
+
+    /* Vocabulary Section */
+    .report-section {
+      margin-bottom: 18px;
+    }
+
+    .report-section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .report-section-title .icon {
+      font-size: 18px;
+    }
+
+    .vocab-card {
+      background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%);
+      border: 1px solid #A7F3D0;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .vocab-word {
+      font-size: 16px;
+      font-weight: 700;
+      color: #059669;
+      min-width: 60px;
+    }
+
+    .vocab-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .vocab-pos {
+      display: inline-block;
+      background: #D1FAE5;
+      color: #047857;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-right: 6px;
+    }
+
+    .vocab-meaning {
+      font-size: 13px;
+      color: var(--text-primary);
+      margin-top: 3px;
+    }
+
+    /* Corrections Section */
+    .corr-card {
+      background: linear-gradient(135deg, #FFF7ED 0%, #FFF1F2 100%);
+      border: 1px solid #FECDD3;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+    }
+
+    .corr-original {
+      font-size: 14px;
+      color: #DC2626;
+      text-decoration: line-through;
+      margin-bottom: 4px;
+    }
+
+    .corr-arrow {
+      color: var(--text-secondary);
+      margin: 0 6px;
+      font-size: 12px;
+    }
+
+    .corr-correct {
+      font-size: 14px;
+      color: #059669;
+      font-weight: 600;
+    }
+
+    .corr-explain {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    /* ── History View ── */
+    .history-view {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 120;
+      display: flex;
+      flex-direction: column;
+      max-width: 480px;
+      margin: 0 auto;
+      transform: translateX(105%);
+      transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+    .history-view.open {
+      transform: translateX(0);
+    }
+
+    .history-header {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .btn-back {
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-back:active { background: var(--bg-chat); }
+
+    .history-header-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .history-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      text-align: center;
+      padding: 32px;
+    }
+
+    /* Date Card */
+    .day-card {
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      position: relative;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .day-card:active {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79,70,229,0.08);
+    }
+
+    .day-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .day-card-date {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .day-card-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 10px;
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .day-card-badge.has-report {
+      background: #ECFDF5;
+      color: #059669;
+    }
+
+    .day-card-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .day-card-stat strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .day-card-preview {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.4;
+    }
+
+    /* History Detail Modal */
+    .detail-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      z-index: 200;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      animation: fadeInOverlay 0.2s ease-out;
+    }
+
+    .detail-overlay.closing {
+      animation: fadeOutOverlay 0.15s ease-in forwards;
+    }
+
+    .detail-sheet {
+      background: rgba(255,255,255,0.94);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 0 16px calc(16px + var(--safe-bottom));
+      animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .detail-overlay.closing .detail-sheet {
+      animation: slideDown 0.2s ease-in forwards;
+    }
+
+    .detail-handle {
+      width: 36px;
+      height: 5px;
+      background: #D1D5DB;
+      border-radius: 3px;
+      margin: 10px auto 0;
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0 8px;
+      position: sticky;
+      top: 0;
+      background: inherit;
+      z-index: 2;
+    }
+
+    .detail-date {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .detail-chat-log {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+    .detail-msg {
+      max-width: 85%;
+      padding: 8px 14px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .detail-msg.user {
+      align-self: flex-end;
+      background: var(--bubble-user);
+      color: #FFF;
+      border-bottom-right-radius: 6px;
+    }
+
+    .detail-msg.ai {
+      align-self: flex-start;
+      background: var(--bubble-ai);
+      color: var(--text-primary);
+      border-bottom-left-radius: 6px;
+    }
+
+    .detail-msg-time {
+      font-size: 10px;
+      opacity: 0.6;
+      margin-top: 2px;
+    }
+
+    .detail-report-section {
+      margin-top: 12px;
+      padding: 14px;
+      background: linear-gradient(135deg, #F5F3FF 0%, #EEF2FF 100%);
+      border-radius: 14px;
+      border: 1px solid #DDD6FE;
+    }
+
+    .detail-report-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    /* ── Typing Indicator ── */
+    .typing {
+      align-self: flex-start;
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+    }
+
+    .typing-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #D1D5DB;
+      animation: bounce 1.2s infinite ease-in-out;
+    }
+
+    .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <button class="btn-history" id="btnHistory" aria-label="历史记录" title="历史记录">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+      </button>
+      <span class="header-title">LingoFlow</span>
+      <span class="header-subtitle">AI 英语陪练</span>
+      <button class="btn-settings" id="btnSettings" aria-label="Settings" title="设置 API Key">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </header>
+
+    <!-- API Key 未配置提示 -->
+    <div class="toast error" id="toast" style="display:none"></div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="modalOverlay" style="display:none">
+      <div class="modal">
+        <div class="modal-title">设置</div>
+
+        <!-- Voice Selection -->
+        <div class="modal-section">
+          <label class="modal-label" for="voiceSelect">朗读音色</label>
+          <select class="modal-select" id="voiceSelect">
+            <option value="">加载中…</option>
+          </select>
+          <div class="modal-hint" id="voiceHint" style="display:none"></div>
+        </div>
+
+        <hr class="modal-divider">
+
+        <!-- API Key -->
+        <div class="modal-section">
+          <label class="modal-label" for="apiKeyInput">DeepSeek API Key</label>
+          <input class="modal-input" type="password" id="apiKeyInput" placeholder="sk-xxxxxxxxxxxxxxxx" autocomplete="off">
+          <div class="modal-hint">
+            密钥仅保存在本地浏览器中。获取 Key：
+            <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com</a>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-cancel" id="btnCancel">取消</button>
+          <button class="btn-save" id="btnSave">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report Bottom Sheet -->
+    <div class="sheet-overlay" id="sheetOverlay" style="display:none">
+      <div class="sheet" id="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <span class="sheet-title">今日复盘报告</span>
+          <button class="btn-close" id="btnCloseReport" aria-label="关闭">✕</button>
+        </div>
+
+        <!-- Loading State -->
+        <div class="report-loading" id="reportLoading">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">AI 正在分析你的对话<span class="loading-dots"></span></div>
+        </div>
+
+        <!-- Report Content -->
+        <div class="report-content" id="reportContent"></div>
+      </div>
+    </div>
+
+    <!-- Chat Area -->
+    <main class="chat" id="chat" aria-live="polite" aria-label="Chat messages">
+      <div class="chat-empty" id="chatEmpty">
+        <div class="chat-empty-icon">💬</div>
+        <div class="chat-empty-title">开始聊天吧</div>
+        <div class="chat-empty-desc">中英混说都可以，AI 会帮你转化为地道英文并指出错误。</div>
+      </div>
+    </main>
+
+    <!-- Report Trigger -->
+    <div class="report-trigger-wrap" id="reportTriggerWrap">
+      <button class="btn-report" id="btnReport" disabled>
+        ✨ 生成今日复盘报告
+      </button>
+    </div>
+
+    <!-- Input Area -->
+    <footer class="input-area">
+      <textarea
+        class="input-box"
+        id="inputBox"
+        rows="1"
+        placeholder="输入中英混杂的内容…"
+        autocomplete="off"
+        enterkeyhint="send"
+      ></textarea>
+      <button class="btn-mic" id="btnMic" aria-label="语音输入" title="语音输入">
+        <svg class="mic-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+          <line x1="12" y1="19" x2="12" y2="23"></line>
+          <line x1="8" y1="23" x2="16" y2="23"></line>
+        </svg>
+        <span class="wave-bars">
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+        </span>
+        <span class="transcript-hint" id="transcriptHint">聆听中…</span>
+      </button>
+      <button class="btn-send" id="btnSend" disabled aria-label="Send message">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </footer>
+  </div>
+  <!-- end .app -->
+
+  <!-- ═══ History View ═══ -->
+  <div class="history-view" id="historyView">
+    <div class="history-header">
+      <button class="btn-back" id="btnBack" aria-label="返回">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </button>
+      <span class="history-header-title">历史记录</span>
+    </div>
+    <div class="history-list" id="historyList">
+      <div class="history-empty">加载中…</div>
+    </div>
+  </div>
+
+  <!-- ═══ History Detail Modal ═══ -->
+  <div class="detail-overlay" id="detailOverlay" style="display:none">
+    <div class="detail-sheet" id="detailSheet">
+      <div class="detail-handle"></div>
+      <div class="detail-header">
+        <span class="detail-date" id="detailDate"></span>
+        <button class="btn-close" id="btnCloseDetail" aria-label="关闭">✕</button>
+      </div>
+      <div id="detailBody"></div>
+    </div>
+  </div>
+
+  <script>
+    /* ═══════════════════════════════════════════
+       LingoFlow — AI English Coach
+       ═══════════════════════════════════════════ */
+
+    /* ── DOM refs ── */
+    const chat         = document.getElementById('chat');
+    const chatEmpty    = document.getElementById('chatEmpty');
+    const inputBox     = document.getElementById('inputBox');
+    const btnSend      = document.getElementById('btnSend');
+    const btnMic       = document.getElementById('btnMic');
+    const transcriptHint = document.getElementById('transcriptHint');
+    const btnSettings  = document.getElementById('btnSettings');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const apiKeyInput  = document.getElementById('apiKeyInput');
+    const voiceSelect  = document.getElementById('voiceSelect');
+    const voiceHint    = document.getElementById('voiceHint');
+    const btnCancel    = document.getElementById('btnCancel');
+    const btnSave      = document.getElementById('btnSave');
+    const toast        = document.getElementById('toast');
+    const btnReport     = document.getElementById('btnReport');
+    const sheetOverlay  = document.getElementById('sheetOverlay');
+    const reportLoading = document.getElementById('reportLoading');
+    const reportContent = document.getElementById('reportContent');
+    const btnCloseReport  = document.getElementById('btnCloseReport');
+    const btnHistory      = document.getElementById('btnHistory');
+    const historyView     = document.getElementById('historyView');
+    const historyList     = document.getElementById('historyList');
+    const btnBack         = document.getElementById('btnBack');
+    const detailOverlay   = document.getElementById('detailOverlay');
+    const detailDate      = document.getElementById('detailDate');
+    const detailBody      = document.getElementById('detailBody');
+    const btnCloseDetail  = document.getElementById('btnCloseDetail');
+
+    const API_URL = 'https://api.deepseek.com/v1/chat/completions';
+    const MODEL   = 'deepseek-chat';
+
+    let messages = [];
+    let isLoading = false;
+
+    /* ═══════════════════════════════════════════
+       localStorage Persistence
+       ═══════════════════════════════════════════ */
+    const STORAGE_PREFIX = 'lingoflow_day_';
+
+    function todayKey() {
+      const d = new Date();
+      return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+    }
+
+    function loadDay(key) {
+      try {
+        const raw = localStorage.getItem(STORAGE_PREFIX + key);
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function saveDay(key, data) {
+      try {
+        localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(data));
+      } catch (e) {
+        console.warn('localStorage full:', e);
+      }
+    }
+
+    function saveToday() {
+      const day = loadDay(todayKey()) || {};
+      day.messages = messages.map(m => ({
+        role: m.role,
+        content: m.content,
+        time: m.time
+      }));
+      if (day._report) day._report = day._report;
+      saveDay(todayKey(), day);
+    }
+
+    function saveReportToToday(reportData) {
+      const day = loadDay(todayKey()) || { messages: messages.map(m => ({ role: m.role, content: m.content, time: m.time })) };
+      day._report = reportData;
+      saveDay(todayKey(), day);
+    }
+
+    /** Return all saved day keys, sorted desc */
+    function getAllDayKeys() {
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(STORAGE_PREFIX)) {
+          keys.push(key.slice(STORAGE_PREFIX.length));
+        }
+      }
+      keys.sort((a, b) => b.localeCompare(a));
+      return keys;
+    }
+
+    // Load today's messages on startup
+    (function initFromStorage() {
+      const today = loadDay(todayKey());
+      if (today && today.messages && today.messages.length) {
+        messages = today.messages;
+        // Render existing messages
+        for (const m of messages) {
+          renderPersistedMessage(m);
+        }
+        hideEmptyState();
+        chat.scrollTop = chat.scrollHeight;
+      }
+    })();
+
+    function renderPersistedMessage(m) {
+      hideEmptyState();
+      const wrapper = document.createElement('div');
+      wrapper.className = 'message ' + m.role;
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      if (m.role === 'ai') {
+        bubble.innerHTML = m.content; // already sanitized HTML
+      } else {
+        bubble.textContent = m.content;
+      }
+      wrapper.appendChild(bubble);
+
+      if (m.role === 'ai') {
+        const actions = document.createElement('div');
+        actions.className = 'msg-actions';
+        const btn = document.createElement('button');
+        btn.className = 'btn-play';
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5,3 19,12 5,21"/></svg> 播放';
+        btn.addEventListener('click', () => speak(stripHTML(m.content), btn));
+        actions.appendChild(btn);
+        const time = document.createElement('span');
+        time.className = 'msg-time';
+        time.textContent = m.time || '';
+        actions.appendChild(time);
+        wrapper.appendChild(actions);
+      }
+
+      chat.appendChild(wrapper);
+    }
+
+    /* ── API Key Management ── */
+    function getApiKey() {
+      return localStorage.getItem('lingoflow_api_key') || '';
+    }
+
+    function setApiKey(key) {
+      localStorage.setItem('lingoflow_api_key', key.trim());
+    }
+
+    function hasApiKey() {
+      return getApiKey().length > 0;
+    }
+
+    /* ── Voice Management ── */
+    const VOICE_STORAGE_KEY = 'lingoflow_voice_uri';
+
+    function getSavedVoiceURI() {
+      return localStorage.getItem(VOICE_STORAGE_KEY) || '';
+    }
+
+    function setSavedVoiceURI(uri) {
+      localStorage.setItem(VOICE_STORAGE_KEY, uri);
+    }
+
+    /** Score a voice for priority sorting. Higher = better. */
+    function voiceScore(voice) {
+      const name = voice.name.toLowerCase();
+      let score = 0;
+      if (name.includes('google'))      score += 100;
+      if (name.includes('premium'))     score += 90;
+      if (name.includes('online'))      score += 80;
+      if (name.includes('siri'))        score += 70;
+      if (name.includes('enhanced'))    score += 60;
+      if (name.includes('natural'))     score += 50;
+      if (name.includes('wave'))        score += 40;
+      if (name.includes('cereproc'))    score += 30;
+      if (voice.localService)           score += 10; // on-device voices slightly preferred over generic remote
+      return score;
+    }
+
+    function loadVoices() {
+      return new Promise((resolve) => {
+        // Android Chrome sometimes returns voices synchronously, sometimes async
+        let voices = speechSynthesis.getVoices();
+        if (voices.length > 0) {
+          resolve(voices);
+          return;
+        }
+        speechSynthesis.addEventListener('voiceschanged', () => {
+          resolve(speechSynthesis.getVoices());
+        }, { once: true });
+        // Fallback timeout for stubborn browsers
+        setTimeout(() => resolve(speechSynthesis.getVoices()), 800);
+      });
+    }
+
+    async function populateVoiceList() {
+      voiceSelect.innerHTML = '<option value="">加载中…</option>';
+
+      try {
+        const allVoices = await loadVoices();
+        const enVoices = allVoices.filter(v =>
+          v.lang.startsWith('en-US') || v.lang.startsWith('en-GB')
+        );
+
+        if (enVoices.length === 0) {
+          voiceSelect.innerHTML = '<option value="">无可用英文音色</option>';
+          voiceHint.style.display = 'block';
+          voiceHint.textContent = '当前浏览器没有英文语音。请尝试用 Chrome 打开。';
+          return;
+        }
+
+        // Sort: high-quality first, then alphabetically
+        enVoices.sort((a, b) => {
+          const scoreDiff = voiceScore(b) - voiceScore(a);
+          if (scoreDiff !== 0) return scoreDiff;
+          return a.name.localeCompare(b.name);
+        });
+
+        const savedURI = getSavedVoiceURI();
+        let html = '';
+        let qualityCount = 0;
+
+        for (const v of enVoices) {
+          const score = voiceScore(v);
+          const isHQ = score >= 30;
+          if (isHQ) qualityCount++;
+          const label = isHQ ? '⭐ ' + v.name : v.name;
+          const selected = v.voiceURI === savedURI ? ' selected' : '';
+          html += `<option value="${v.voiceURI.replace(/"/g, '&quot;')}"${selected}>${label} (${v.lang})</option>`;
+        }
+
+        voiceSelect.innerHTML = html;
+
+        if (qualityCount > 0) {
+          voiceHint.style.display = 'block';
+          voiceHint.textContent = `⭐ 标记为高质量云端发音（共 ${qualityCount} 个）。建议优先选择。`;
+        } else {
+          voiceHint.style.display = 'none';
+        }
+      } catch {
+        voiceSelect.innerHTML = '<option value="">加载失败</option>';
+      }
+    }
+
+    function getSelectedVoice() {
+      if (!('speechSynthesis' in window)) return null;
+
+      const savedURI = getSavedVoiceURI();
+      const voices = speechSynthesis.getVoices();
+      if (savedURI) {
+        const match = voices.find(v => v.voiceURI === savedURI);
+        if (match) return match;
+      }
+      // Fallback: first en-US voice
+      return voices.find(v => v.lang.startsWith('en-US')) || voices.find(v => v.lang.startsWith('en-GB')) || null;
+    }
+
+    /* ── Toast ── */
+    let toastTimer;
+    function showToast(msg, type) {
+      clearTimeout(toastTimer);
+      toast.textContent = msg;
+      toast.className = 'toast ' + type;
+      toast.style.display = 'block';
+      toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
+
+    /* ── Settings Modal ── */
+    function openSettings() {
+      apiKeyInput.value = getApiKey();
+      populateVoiceList();
+      modalOverlay.style.display = 'flex';
+    }
+
+    function closeSettings() {
+      modalOverlay.classList.add('closing');
+      modalOverlay.addEventListener('animationend', function handler() {
+        modalOverlay.classList.remove('closing');
+        modalOverlay.style.display = 'none';
+        modalOverlay.removeEventListener('animationend', handler);
+      });
+    }
+
+    btnSettings.addEventListener('click', openSettings);
+    btnCancel.addEventListener('click', closeSettings);
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closeSettings();
+    });
+
+    btnSave.addEventListener('click', () => {
+      const key = apiKeyInput.value.trim();
+      if (!key) {
+        showToast('请输入 API Key', 'error');
+        return;
+      }
+      if (!key.startsWith('sk-')) {
+        showToast('API Key 格式不正确，应以 sk- 开头', 'error');
+        return;
+      }
+      setApiKey(key);
+
+      // Save voice selection
+      const selectedURI = voiceSelect.value;
+      if (selectedURI) {
+        setSavedVoiceURI(selectedURI);
+      }
+
+      closeSettings();
+      showToast('设置已保存', 'success');
+    });
+
+    /* ── Helpers ── */
+    function escapeHTML(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function formatTime() {
+      const now = new Date();
+      return now.getHours().toString().padStart(2, '0') + ':' +
+             now.getMinutes().toString().padStart(2, '0');
+    }
+
+    /* ── Sanitize AI response ──
+       Only allow <span class="hl-word"> and <span class="hl-error"> tags.
+       Strip everything else. */
+    function sanitizeHTML(html) {
+      // Strip markdown code fences
+      let text = html
+        .replace(/```html\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .trim();
+
+      const doc = new DOMParser().parseFromString(text, 'text/html');
+
+      function walk(node) {
+        const allowed = [];
+        for (const child of node.childNodes) {
+          if (child.nodeType === Node.TEXT_NODE) {
+            allowed.push(document.createTextNode(child.textContent));
+          } else if (child.nodeType === Node.ELEMENT_NODE) {
+            if (child.tagName === 'SPAN' &&
+                (child.classList.contains('hl-word') || child.classList.contains('hl-error'))) {
+              const span = document.createElement('span');
+              span.className = child.className;
+              span.append(...walk(child));
+              allowed.push(span);
+            } else {
+              allowed.push(...walk(child));
+            }
+          }
+        }
+        return allowed;
+      }
+
+      const container = document.createElement('div');
+      container.append(...walk(doc.body));
+      return container.innerHTML;
+    }
+
+    /* ── Strip HTML tags for TTS ── */
+    function stripHTML(html) {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      return doc.body.textContent || '';
+    }
+
+    /* ── Auto-resize textarea ── */
+    inputBox.addEventListener('input', () => {
+      inputBox.style.height = 'auto';
+      inputBox.style.height = Math.min(inputBox.scrollHeight, 100) + 'px';
+      btnSend.disabled = inputBox.value.trim() === '' || isLoading;
+    });
+
+    /* ═══════════════════════════════════════════
+       Speech Recognition (STT)
+       ═══════════════════════════════════════════ */
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+    let isRecording = false;
+    let finalTranscript = '';
+
+    function initRecognition() {
+      if (!SpeechRecognition) return null;
+
+      const rec = new SpeechRecognition();
+      rec.lang = 'zh-CN';
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.maxAlternatives = 1;
+
+      rec.addEventListener('result', (e) => {
+        let interim = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const result = e.results[i];
+          if (result.isFinal) {
+            finalTranscript += result[0].transcript;
+          } else {
+            interim += result[0].transcript;
+          }
+        }
+        const display = finalTranscript + interim;
+        transcriptHint.textContent = display ? display : '聆听中…';
+        // Optionally preview interim in the input box
+        if (display) {
+          inputBox.value = display;
+          inputBox.dispatchEvent(new Event('input'));
+        }
+      });
+
+      rec.addEventListener('end', () => {
+        // Auto-stop on silence — fill input with final text
+        if (finalTranscript.trim()) {
+          inputBox.value = finalTranscript.trim();
+          inputBox.dispatchEvent(new Event('input'));
+        }
+        stopRecording();
+      });
+
+      rec.addEventListener('speechend', () => {
+        // Silence detected — stop
+        rec.stop();
+      });
+
+      rec.addEventListener('error', (e) => {
+        console.error('STT error:', e.error, e.message);
+        switch (e.error) {
+          case 'not-allowed':
+            showToast('麦克风权限被拒绝，请在浏览器设置中允许', 'error');
+            break;
+          case 'no-speech':
+            showToast('未检测到语音，请重试', 'error');
+            break;
+          case 'audio-capture':
+            showToast('未找到麦克风设备', 'error');
+            break;
+          case 'network':
+            showToast('语音识别需要网络连接', 'error');
+            break;
+          default:
+            if (e.message) showToast('语音识别出错: ' + e.message, 'error');
+        }
+        stopRecording();
+      });
+
+      // Warm up: start+stop immediately to preload the recognizer
+      // (reduces latency on first real use on some browsers)
+      try {
+        rec.start();
+        setTimeout(() => {
+          try { rec.stop(); } catch (_) { /* ignore */ }
+        }, 100);
+      } catch (_) { /* ignore */ }
+
+      return rec;
+    }
+
+    function startRecording() {
+      if (isRecording || isLoading) return;
+
+      // Reset accumulated transcript for this recording session
+      finalTranscript = '';
+
+      if (!SpeechRecognition) {
+        showToast('当前浏览器不支持语音输入，请使用 Chrome', 'error');
+        return;
+      }
+
+      // Lazy-init or re-create (some browsers need a fresh instance after stop)
+      if (!recognition) {
+        recognition = initRecognition();
+      }
+      if (!recognition) return;
+
+      // Re-create if the previous instance finished
+      try {
+        recognition.start();
+      } catch (_) {
+        // Already started or stale — re-create
+        recognition = initRecognition();
+        if (recognition) {
+          try { recognition.start(); } catch (e) { return; }
+        } else {
+          return;
+        }
+      }
+
+      isRecording = true;
+      btnMic.classList.add('recording');
+      transcriptHint.textContent = '聆听中…';
+      transcriptHint.style.display = '';
+    }
+
+    function stopRecording() {
+      isRecording = false;
+      btnMic.classList.remove('recording');
+      transcriptHint.style.display = 'none';
+
+      if (recognition) {
+        try { recognition.stop(); } catch (_) { /* ok */ }
+      }
+    }
+
+    btnMic.addEventListener('click', () => {
+      if (isRecording) {
+        stopRecording();
+      } else {
+        startRecording();
+      }
+    });
+
+    // If browser doesn't support STT at all, hide the mic button
+    if (!SpeechRecognition) {
+      btnMic.classList.add('unsupported');
+    }
+
+    /* ── Render ── */
+    function hideEmptyState() {
+      if (chatEmpty) chatEmpty.style.display = 'none';
+      btnReport.disabled = false;
+    }
+
+    function addMessage(role, content) {
+      hideEmptyState();
+      messages.push({ role, content, time: formatTime() });
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'message ' + role;
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+
+      if (role === 'ai') {
+        // AI content may contain highlight spans — render as HTML
+        bubble.innerHTML = content;
+      } else {
+        bubble.textContent = content;
+      }
+
+      wrapper.appendChild(bubble);
+
+      // Play button for AI messages (speak plain text, no tags)
+      if (role === 'ai') {
+        const actions = document.createElement('div');
+        actions.className = 'msg-actions';
+
+        const btn = document.createElement('button');
+        btn.className = 'btn-play';
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5,3 19,12 5,21"/></svg> 播放';
+        btn.addEventListener('click', () => speak(stripHTML(content), btn));
+        actions.appendChild(btn);
+
+        const time = document.createElement('span');
+        time.className = 'msg-time';
+        time.textContent = formatTime();
+        actions.appendChild(time);
+
+        wrapper.appendChild(actions);
+      }
+
+      chat.appendChild(wrapper);
+      chat.scrollTop = chat.scrollHeight;
+
+      // Persist
+      saveToday();
+    }
+
+    /* ── TTS ── */
+    function speak(text, btn) {
+      if (!('speechSynthesis' in window)) return;
+
+      if (speechSynthesis.speaking) {
+        speechSynthesis.cancel();
+        btn.classList.remove('playing');
+        return;
+      }
+
+      const voice = getSelectedVoice();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = voice ? voice.lang : 'en-US';
+      utterance.rate = 0.9;
+      if (voice) utterance.voice = voice;
+
+      btn.classList.add('playing');
+      utterance.onend = () => btn.classList.remove('playing');
+      utterance.onerror = () => btn.classList.remove('playing');
+
+      speechSynthesis.speak(utterance);
+    }
+
+    function showTyping() {
+      hideEmptyState();
+      const el = document.createElement('div');
+      el.className = 'typing';
+      el.id = 'typing';
+      el.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+      chat.appendChild(el);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function hideTyping() {
+      const el = document.getElementById('typing');
+      if (el) el.remove();
+    }
+
+    /* ═══════════════════════════════════════════
+       DeepSeek API Call
+       ═══════════════════════════════════════════ */
+
+    const SYSTEM_PROMPT = `你是一名严格精准的英语陪练（English Coach）。你只有一个任务：将用户的中英混杂句子重写为地道全英文，并且**无一例外**地为每一个修正点加上 HTML 标签。
+
+## 必须遵守的规则（违反即为失败）
+
+1. **中文翻译标记**：用户用中文表达、你翻译为英文的词/短语，**必须**用 <span class="hl-word">翻译</span> 包裹。不要跳过任何一个中文词。
+2. **语法/用词修正标记**：用户英文中的语法错误、时态错误、介词错误、单复数错误、用词不当，**必须**用 <span class="hl-error">纠正后的正确形式</span> 包裹。
+3. **双重标记**：一句话中同时有中文翻译和语法错误时，两类标签**必须同时出现**，一个都不能少。
+4. **精炼包裹**：只包裹被修正或翻译的那个关键词/短语，不要包裹整句。
+5. **纯输出**：只返回带标签的一句英文。不得添加任何解释、问候语、前缀（如"回复："）、markdown 代码块。
+6. **语气自然**：像一个英语母语者在聊天，不啰嗦不生硬。
+
+## Few-Shot 强制示例（你的输出格式必须完全模仿以下示例）
+
+示例 1
+用户："a 客人 is drinking tea with my father on the living room"
+回复：A <span class="hl-word">guest</span> is drinking tea with my father <span class="hl-error">in</span> the living room.
+
+示例 2
+用户："我 want to 学习 English because 它很重要"
+回复：I want to <span class="hl-word">learn</span> English because <span class="hl-word">it is very important</span>.
+
+示例 3
+用户："she don't like the 味道 of this food"
+回复：She <span class="hl-error">doesn't</span> like the <span class="hl-word">taste</span> of this food.
+
+示例 4
+用户："the 孩子s are play in the park"
+回复：The <span class="hl-word">children</span> are <span class="hl-error">playing</span> in the park.
+
+示例 5
+用户："he go to school at 早上 seven o'clock"
+回复：He <span class="hl-error">goes</span> to school at <span class="hl-word">seven o'clock in the morning</span>.
+
+示例 6
+用户："我 yesterday meet a 非常有趣 person at the 咖啡店"
+回复：<span class="hl-word">Yesterday</span> I <span class="hl-error">met</span> a <span class="hl-word">very interesting</span> person at the <span class="hl-word">coffee shop</span>.
+
+示例 7
+用户："the weather is 非常好 today, 我们 should go out"
+回复：The weather is <span class="hl-word">very nice</span> today, <span class="hl-word">we</span> should go out.
+
+## 检查清单（每次回复前自检）
+- 用户的中文词都翻译并标记 hl-word 了吗？
+- 用户的语法/用词错误都修正并标记 hl-error 了吗？
+- 有没有输出任何标签之外的内容？（禁止）
+- 标签是否只包裹了关键词而非整句？（必须精炼）`;
+
+    async function callDeepSeek(userMessage) {
+      const apiKey = getApiKey();
+      if (!apiKey) {
+        showToast('请先设置 API Key', 'error');
+        openSettings();
+        throw new Error('No API key');
+      }
+
+      const conversation = messages.map(m => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.role === 'ai' ? stripHTML(m.content) : m.content
+      }));
+
+      const body = {
+        model: MODEL,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          ...conversation.slice(-8),   // keep last 8 messages for context
+          { role: 'user', content: userMessage }
+        ],
+        temperature: 0.7,
+        max_tokens: 512
+      };
+
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const msg = err.error?.message || `HTTP ${res.status}`;
+        throw new Error(msg);
+      }
+
+      const data = await res.json();
+      const raw = data.choices?.[0]?.message?.content || '';
+      return sanitizeHTML(raw);
+    }
+
+    /* ═══════════════════════════════════════════
+       Send
+       ═══════════════════════════════════════════ */
+
+    async function send() {
+      const text = inputBox.value.trim();
+      if (!text || isLoading) return;
+
+      // Add user message
+      addMessage('user', text);
+      inputBox.value = '';
+      inputBox.style.height = 'auto';
+      btnSend.disabled = true;
+      isLoading = true;
+      inputBox.focus();
+
+      // Reset voice state after sending
+      finalTranscript = '';
+      if (isRecording) stopRecording();
+
+      showTyping();
+
+      try {
+        const reply = await callDeepSeek(text);
+        hideTyping();
+        addMessage('ai', reply);
+      } catch (err) {
+        hideTyping();
+        console.error('API error:', err);
+
+        // Remove user message on error for retry friendliness
+        // (keep it, just show error)
+        const errMsg = err.message.includes('fetch') || err.message.includes('Failed')
+          ? '网络请求失败，请检查网络连接'
+          : err.message;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'message ai';
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.style.background = '#FEF2F2';
+        bubble.style.color = '#DC2626';
+        bubble.style.fontSize = '14px';
+        bubble.textContent = '抱歉，请求出错了。' + errMsg;
+        wrapper.appendChild(bubble);
+        chat.appendChild(wrapper);
+        chat.scrollTop = chat.scrollHeight;
+      } finally {
+        isLoading = false;
+        btnSend.disabled = inputBox.value.trim() === '';
+      }
+    }
+
+    btnSend.addEventListener('click', send);
+
+    inputBox.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (!btnSend.disabled) send();
+      }
+    });
+
+    /* ── First-launch: prompt for API key ── */
+    if (!hasApiKey()) {
+      setTimeout(openSettings, 600);
+    }
+
+    /* ═══════════════════════════════════════════
+       Daily Review Report
+       ═══════════════════════════════════════════ */
+
+    const REPORT_SYSTEM_PROMPT = `你是一名资深的英语教育分析师。请根据以下用户的英语对话历史，生成一份学习复盘报告。
+
+## 任务要求
+
+分析用户对话中的英语使用情况，从以下维度给出反馈：
+1. 评分（0-100整数）：综合评估语法准确度、词汇丰富度、表达地道程度
+2. 生词（3-5个）：提取用户对话中使用过或AI推荐过的有价值词汇/短语
+3. 语法诊断（1-3个）：挑出最典型的语法错误或中式英语表达，给出正确版本
+4. 一句话总结：鼓励性的中文评价
+
+## 返回格式（严格JSON，不要markdown代码块）
+
+{
+  "score": 85,
+  "vocabulary": [
+    {"word": "单词/短语", "pos": "词性简写 (n./v./adj./adv./prep./phr.)", "meaning": "中文释义"}
+  ],
+  "corrections": [
+    {"original": "用户原文中的错误表达", "correct": "地道正确版本", "explanation": "中文解释为什么错了、正确用法是什么"}
+  ],
+  "summary": "一句总结评价，中文，鼓励性语气"
+}
+
+## 规则
+- vocabulary 只挑选对话中出现过的、值得学习的表达，3-5个
+- corrections 只挑最典型最值得纠正的错误，1-3个，如果没有明显错误可以返回空数组
+- score 客观评分，不要太宽松
+- 你只返回JSON本身，不输出任何其他文字`;
+
+    function extractConversation() {
+      return messages
+        .filter(m => m.role === 'user' || m.role === 'ai')
+        .map(m => ({
+          role: m.role === 'user' ? 'user' : 'assistant',
+          content: m.role === 'ai' ? stripHTML(m.content) : m.content
+        }));
+    }
+
+    async function callDeepSeekReport(conversation) {
+      const apiKey = getApiKey();
+      if (!apiKey) {
+        showToast('请先设置 API Key', 'error');
+        openSettings();
+        throw new Error('No API key');
+      }
+
+      const body = {
+        model: MODEL,
+        messages: [
+          { role: 'system', content: REPORT_SYSTEM_PROMPT },
+          { role: 'user', content: JSON.stringify(conversation) }
+        ],
+        temperature: 0.5,
+        max_tokens: 1024
+      };
+
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      const raw = data.choices?.[0]?.message?.content || '';
+
+      // Parse JSON from response (strip possible fences)
+      let json = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+      return JSON.parse(json);
+    }
+
+    function openReportSheet() {
+      if (messages.length === 0) {
+        showToast('请先进行一段对话', 'error');
+        return;
+      }
+      sheetOverlay.style.display = 'flex';
+      reportLoading.style.display = 'flex';
+      reportContent.style.display = 'none';
+      reportContent.innerHTML = '';
+      generateReport();
+    }
+
+    function closeReportSheet() {
+      sheetOverlay.classList.add('closing');
+      sheetOverlay.addEventListener('animationend', function handler() {
+        sheetOverlay.classList.remove('closing');
+        sheetOverlay.style.display = 'none';
+        sheetOverlay.removeEventListener('animationend', handler);
+      });
+    }
+
+    btnCloseReport.addEventListener('click', closeReportSheet);
+    sheetOverlay.addEventListener('click', (e) => {
+      if (e.target === sheetOverlay) closeReportSheet();
+    });
+
+    async function generateReport() {
+      try {
+        const conv = extractConversation();
+        const data = await callDeepSeekReport(conv);
+        saveReportToToday(data);
+        renderReport(data);
+      } catch (err) {
+        console.error('Report error:', err);
+        reportLoading.style.display = 'none';
+        reportContent.style.display = 'block';
+        reportContent.innerHTML = `
+          <div class="report-loading">
+            <div style="font-size:32px;margin-bottom:12px">😵</div>
+            <div style="color:#DC2626;font-size:14px;font-weight:600;margin-bottom:6px">报告生成失败</div>
+            <div style="color:var(--text-secondary);font-size:13px;text-align:center">${escapeHTML(err.message)}</div>
+            <button onclick="document.getElementById('sheetOverlay').style.display='none'" style="margin-top:16px;padding:10px 24px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);font-size:14px;cursor:pointer">关闭</button>
+          </div>`;
+      }
+    }
+
+    function renderReport(data) {
+      reportLoading.style.display = 'none';
+      reportContent.style.display = 'block';
+
+      const score = Math.max(0, Math.min(100, Math.round(data.score || 0)));
+      const vocab = data.vocabulary || [];
+      const corrections = data.corrections || [];
+      const summary = data.summary || '';
+
+      let html = '';
+
+      // Score section
+      html += `
+        <div class="score-section">
+          <div class="score-circle" style="--score-pct:${score}">
+            <span class="score-num">${score}</span>
+            <span class="score-label">分</span>
+          </div>
+          <div class="score-summary">${escapeHTML(summary)}</div>
+        </div>
+      `;
+
+      // Vocabulary section
+      if (vocab.length) {
+        html += `<div class="report-section">
+          <div class="report-section-title"><span class="icon">📝</span>核心生词</div>`;
+        for (const v of vocab) {
+          html += `
+            <div class="vocab-card">
+              <div>
+                <div class="vocab-word">${escapeHTML(v.word)}</div>
+                <div class="vocab-meta"><span class="vocab-pos">${escapeHTML(v.pos || '')}</span></div>
+              </div>
+              <div class="vocab-meaning">${escapeHTML(v.meaning || '')}</div>
+            </div>`;
+        }
+        html += `</div>`;
+      }
+
+      // Corrections section
+      if (corrections.length) {
+        html += `<div class="report-section">
+          <div class="report-section-title"><span class="icon">🔍</span>语法诊断</div>`;
+        for (const c of corrections) {
+          html += `
+            <div class="corr-card">
+              <div class="corr-original">${escapeHTML(c.original)}</div>
+              <div><span class="corr-correct">${escapeHTML(c.correct)}</span></div>
+              <div class="corr-explain">${escapeHTML(c.explanation || '')}</div>
+            </div>`;
+        }
+        html += `</div>`;
+      }
+
+      reportContent.innerHTML = html;
+    }
+
+    btnReport.addEventListener('click', openReportSheet);
+
+    /* ═══════════════════════════════════════════
+       History View
+       ═══════════════════════════════════════════ */
+
+    function openHistory() {
+      historyView.classList.add('open');
+      renderHistoryList();
+    }
+
+    function closeHistory() {
+      historyView.classList.remove('open');
+    }
+
+    btnHistory.addEventListener('click', openHistory);
+    btnBack.addEventListener('click', closeHistory);
+
+    function renderHistoryList() {
+      const keys = getAllDayKeys();
+      if (keys.length === 0) {
+        historyList.innerHTML = `
+          <div class="history-empty">
+            <div style="font-size:48px;margin-bottom:12px;opacity:0.6">📅</div>
+            <div style="font-weight:600;color:var(--text-primary);margin-bottom:4px">暂无记录</div>
+            <div style="font-size:14px;color:var(--text-secondary)">开始聊天后会自动保存</div>
+          </div>`;
+        return;
+      }
+
+      let html = '';
+      for (const key of keys) {
+        const day = loadDay(key);
+        if (!day) continue;
+        const msgCount = (day.messages || []).length;
+        const report = day._report;
+        const dateParts = key.split('-');
+        const displayDate = dateParts[0] + '年' + parseInt(dateParts[1]) + '月' + parseInt(dateParts[2]) + '日';
+
+        // Get preview text from first user message
+        const firstUser = (day.messages || []).find(m => m.role === 'user');
+        const preview = firstUser ? stripHTML(firstUser.content).slice(0, 50) : '';
+
+        const isToday = key === todayKey();
+
+        html += `
+          <div class="day-card" data-key="${key}">
+            <div class="day-card-top">
+              <span class="day-card-date">${escapeHTML(displayDate)}${isToday ? ' (今天)' : ''}</span>
+              ${report ? `<span class="day-card-badge has-report">📊 ${report.score}分</span>` : `<span class="day-card-badge">无报告</span>`}
+            </div>
+            <div class="day-card-stats">
+              <span class="day-card-stat"><strong>${msgCount}</strong> 条消息</span>
+            </div>
+            ${preview ? `<div class="day-card-preview">${escapeHTML(preview)}</div>` : ''}
+          </div>`;
+      }
+
+      historyList.innerHTML = html;
+
+      // Attach click handlers
+      historyList.querySelectorAll('.day-card').forEach(card => {
+        card.addEventListener('click', () => openDetail(card.dataset.key));
+      });
+    }
+
+    /* ── History Detail Modal ── */
+    function openDetail(key) {
+      const day = loadDay(key);
+      if (!day) return;
+
+      const dateParts = key.split('-');
+      const displayDate = dateParts[0] + '年' + parseInt(dateParts[1]) + '月' + parseInt(dateParts[2]) + '日';
+
+      detailDate.textContent = displayDate;
+      let body = '';
+
+      // Chat log
+      body += '<div class="detail-chat-log">';
+      for (const m of (day.messages || [])) {
+        const role = m.role === 'user' ? 'user' : 'ai';
+        const content = m.role === 'ai' ? m.content : escapeHTML(stripHTML(m.content));
+        body += `
+          <div class="detail-msg ${role}">
+            ${content}
+            ${m.time ? `<div class="detail-msg-time">${escapeHTML(m.time)}</div>` : ''}
+          </div>`;
+      }
+      if (!(day.messages || []).length) {
+        body += '<div style="text-align:center;color:var(--text-secondary);padding:20px">无聊天记录</div>';
+      }
+      body += '</div>';
+
+      // Report
+      if (day._report) {
+        const r = day._report;
+        body += `
+          <div class="detail-report-section">
+            <div class="detail-report-title">📊 复盘报告 · ${r.score || '?'}分</div>
+        `;
+        if (r.summary) body += `<div style="font-size:13px;color:var(--text-primary);margin-bottom:10px">${escapeHTML(r.summary)}</div>`;
+        if (r.vocabulary && r.vocabulary.length) {
+          body += '<div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin:8px 0 4px">📝 生词</div>';
+          for (const v of r.vocabulary) {
+            body += `<div style="font-size:13px;margin-bottom:2px"><strong style="color:#059669">${escapeHTML(v.word)}</strong> <span style="font-size:11px;color:var(--text-secondary)">${escapeHTML(v.pos || '')}</span> — ${escapeHTML(v.meaning || '')}</div>`;
+          }
+        }
+        if (r.corrections && r.corrections.length) {
+          body += '<div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin:8px 0 4px">🔍 语法诊断</div>';
+          for (const c of r.corrections) {
+            body += `<div style="font-size:13px;margin-bottom:6px"><span style="color:#DC2626;text-decoration:line-through">${escapeHTML(c.original)}</span> → <span style="color:#059669;font-weight:600">${escapeHTML(c.correct)}</span><div style="font-size:11px;color:var(--text-secondary)">${escapeHTML(c.explanation || '')}</div></div>`;
+          }
+        }
+        body += '</div>';
+      }
+
+      detailBody.innerHTML = body;
+      detailOverlay.style.display = 'flex';
+    }
+
+    function closeDetail() {
+      detailOverlay.classList.add('closing');
+      detailOverlay.addEventListener('animationend', function handler() {
+        detailOverlay.classList.remove('closing');
+        detailOverlay.style.display = 'none';
+        detailOverlay.removeEventListener('animationend', handler);
+      });
+    }
+
+    btnCloseDetail.addEventListener('click', closeDetail);
+    detailOverlay.addEventListener('click', (e) => {
+      if (e.target === detailOverlay) closeDetail();
+    });
+
+    /* ── Register Service Worker ── */
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>
