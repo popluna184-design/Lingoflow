@@ -8,8 +8,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="LingoFlow">
   <meta name="description" content="LingoFlow - AI-powered English learning companion">
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icon-180.png">
   <title>LingoFlow</title>
   <style>
     *, *::before, *::after {
@@ -1244,6 +1244,9 @@
             <option value="">加载中…</option>
           </select>
           <div class="modal-hint" id="voiceHint" style="display:none"></div>
+          <button class="btn-play" type="button" id="btnRefreshVoices" style="margin-top:8px;width:100%;justify-content:center;gap:6px;font-size:13px;padding:8px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> 刷新音色列表
+          </button>
         </div>
 
         <hr class="modal-divider">
@@ -1365,6 +1368,7 @@
     </div>
   </div>
 
+  <script src="./config.js"></script>
   <script>
     /* ═══════════════════════════════════════════
        LingoFlow — AI English Coach
@@ -1381,7 +1385,8 @@
     const modalOverlay = document.getElementById('modalOverlay');
     const apiKeyInput  = document.getElementById('apiKeyInput');
     const voiceSelect  = document.getElementById('voiceSelect');
-    const voiceHint    = document.getElementById('voiceHint');
+    const voiceHint      = document.getElementById('voiceHint');
+    const btnRefreshVoices = document.getElementById('btnRefreshVoices');
     const btnCancel    = document.getElementById('btnCancel');
     const btnSave      = document.getElementById('btnSave');
     const toast        = document.getElementById('toast');
@@ -1512,6 +1517,11 @@
 
     /* ── API Key Management ── */
     function getApiKey() {
+      // Global shared key takes priority (set in config.js)
+      if (typeof USE_GLOBAL_KEY !== 'undefined' && USE_GLOBAL_KEY &&
+          typeof GLOBAL_KEY !== 'undefined' && GLOBAL_KEY && GLOBAL_KEY !== 'sk-你的DeepSeek密钥填在这里') {
+        return GLOBAL_KEY;
+      }
       return localStorage.getItem('lingoflow_api_key') || '';
     }
 
@@ -1521,6 +1531,11 @@
 
     function hasApiKey() {
       return getApiKey().length > 0;
+    }
+
+    function isUsingGlobalKey() {
+      return typeof USE_GLOBAL_KEY !== 'undefined' && USE_GLOBAL_KEY &&
+             typeof GLOBAL_KEY !== 'undefined' && GLOBAL_KEY && GLOBAL_KEY !== 'sk-你的DeepSeek密钥填在这里';
     }
 
     /* ── Voice Management ── */
@@ -1550,19 +1565,83 @@
       return score;
     }
 
+    /* ── Warm up speech engine (required for iOS / some Android) ── */
+    let speechWarmedUp = false;
+
+    function warmUpSpeech() {
+      if (speechWarmedUp || !('speechSynthesis' in window)) return;
+      speechWarmedUp = true;
+      try {
+        const u = new SpeechSynthesisUtterance('');
+        u.volume = 0;
+        u.rate = 1.5;
+        u.lang = 'en-US';
+        speechSynthesis.speak(u);
+        // Immediately cancel — just enough to wake the engine
+        setTimeout(() => { try { speechSynthesis.cancel(); } catch (_) { /* ok */ } }, 50);
+      } catch (_) { /* ignore */ }
+    }
+
+    // Warm up on first user tap anywhere
+    document.addEventListener('click', warmUpSpeech, { once: true });
+    document.addEventListener('touchstart', warmUpSpeech, { once: true });
+
+    // Persistent voiceschanged listener — updates voice list whenever voices load
+    if ('speechSynthesis' in window) {
+      speechSynthesis.addEventListener('voiceschanged', () => {
+        // Re-populate if settings modal is open
+        if (modalOverlay.style.display === 'flex') {
+          populateVoiceList();
+        }
+        // Pre-load voices into cache
+        speechSynthesis.getVoices();
+      });
+    }
+
     function loadVoices() {
       return new Promise((resolve) => {
-        // Android Chrome sometimes returns voices synchronously, sometimes async
+        if (!('speechSynthesis' in window)) {
+          resolve([]);
+          return;
+        }
+
+        // Warm up first if needed
+        warmUpSpeech();
+
         let voices = speechSynthesis.getVoices();
         if (voices.length > 0) {
           resolve(voices);
           return;
         }
-        speechSynthesis.addEventListener('voiceschanged', () => {
+
+        // Wait for voiceschanged event (iOS / slow mobile)
+        let resolved = false;
+        const handler = () => {
+          if (resolved) return;
+          resolved = true;
           resolve(speechSynthesis.getVoices());
-        }, { once: true });
-        // Fallback timeout for stubborn browsers
-        setTimeout(() => resolve(speechSynthesis.getVoices()), 800);
+        };
+
+        speechSynthesis.addEventListener('voiceschanged', handler, { once: true });
+
+        // Retry: try speaking to trigger engine, then check again
+        setTimeout(() => {
+          if (resolved) return;
+          warmUpSpeech();
+          const retryVoices = speechSynthesis.getVoices();
+          if (retryVoices.length > 0) {
+            resolved = true;
+            resolve(retryVoices);
+          }
+        }, 600);
+
+        // Final fallback for stubborn browsers
+        setTimeout(() => {
+          if (!resolved) {
+            resolved = true;
+            resolve(speechSynthesis.getVoices());
+          }
+        }, 2500);
       });
     }
 
@@ -1680,6 +1759,14 @@
 
       closeSettings();
       showToast('设置已保存', 'success');
+    });
+
+    btnRefreshVoices.addEventListener('click', () => {
+      speechWarmedUp = false;
+      warmUpSpeech();
+      populateVoiceList().then(() => {
+        showToast('音色列表已刷新', 'success');
+      });
     });
 
     /* ── Helpers ── */
@@ -2134,8 +2221,8 @@
       }
     });
 
-    /* ── First-launch: prompt for API key ── */
-    if (!hasApiKey()) {
+    /* ── First-launch: prompt for API key (skip if global key active) ── */
+    if (!hasApiKey() && !isUsingGlobalKey()) {
       setTimeout(openSettings, 600);
     }
 
@@ -2460,7 +2547,7 @@
 
     /* ── Register Service Worker ── */
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
     }
   </script>
 </body>
