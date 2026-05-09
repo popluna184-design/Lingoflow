@@ -12,1008 +12,281 @@
   <link rel="apple-touch-icon" href="./icon-180.png">
   <title>LingoFlow</title>
   <style>
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    :root {
-      --primary: #4F46E5;
-      --primary-light: #EEF2FF;
-      --bubble-user: #4F46E5;
-      --bubble-ai: #F3F4F6;
-      --text-primary: #1F2937;
-      --text-secondary: #6B7280;
-      --bg: #FFFFFF;
-      --bg-chat: #F9FAFB;
-      --border: #E5E7EB;
-      --highlight-error: #EF4444;
-      --highlight-word: #10B981;
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-    }
-
-    html, body {
-      height: 100%;
-      overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
-      font-size: 16px;
-      color: var(--text-primary);
-      background: var(--bg);
-      -webkit-font-smoothing: antialiased;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .app {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      max-width: 480px;
-      margin: 0 auto;
-      background: var(--bg);
-    }
-
-    /* ── Header ── */
-    .header {
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px 16px;
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-      position: relative;
-      z-index: 10;
-    }
-
-    .header-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--primary);
-      letter-spacing: -0.3px;
-    }
-
-    .header-subtitle {
-      font-size: 11px;
-      color: var(--text-secondary);
-      margin-left: 8px;
-      margin-top: 2px;
-    }
-
-    .btn-history, .btn-settings {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 34px;
-      height: 34px;
-      border: none;
-      border-radius: 50%;
-      background: transparent;
-      color: var(--text-secondary);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      transition: background 0.15s;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .btn-history { left: 12px; }
-    .btn-settings { right: 12px; }
-
-    .btn-history:active, .btn-settings:active {
-      background: var(--bg-chat);
-    }
-
-    /* ── Settings Modal ── */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.4);
-      z-index: 100;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      animation: fadeInOverlay 0.2s ease-out;
-    }
-
-    @keyframes fadeInOverlay {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
-
-    .modal-overlay.closing {
-      animation: fadeOutOverlay 0.15s ease-in forwards;
-    }
-
-    @keyframes fadeOutOverlay {
-      from { opacity: 1; }
-      to   { opacity: 0; }
-    }
-
-    .modal {
-      background: var(--bg);
-      border-radius: 16px 16px 0 0;
-      width: 100%;
-      max-width: 480px;
-      padding: 20px 16px calc(20px + var(--safe-bottom));
-      animation: slideUp 0.25s ease-out;
-    }
-
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to   { transform: translateY(0); }
-    }
-
-    .modal-overlay.closing .modal {
-      animation: slideDown 0.15s ease-in forwards;
-    }
-
-    @keyframes slideDown {
-      from { transform: translateY(0); }
-      to   { transform: translateY(100%); }
-    }
-
-    .modal-title {
-      font-size: 17px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 14px;
-      text-align: center;
-    }
-
-    .modal-label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      margin-bottom: 6px;
-    }
-
-    .modal-hint {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-top: 6px;
-      line-height: 1.5;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 16px;
-    }
-
-    .btn-cancel {
-      flex: 1;
-      padding: 12px;
-      border: 1.5px solid var(--border);
-      border-radius: 12px;
-      background: var(--bg);
-      color: var(--text-primary);
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --primary: #4F46E5; --primary-light: #EEF2FF; --bubble-user: #4F46E5; --bubble-ai: #F3F4F6; --text-primary: #1F2937; --text-secondary: #6B7280; --bg: #FFFFFF; --bg-chat: #F9FAFB; --border: #E5E7EB; --highlight-error: #EF4444; --highlight-word: #10B981; --safe-bottom: env(safe-area-inset-bottom, 0px); }
+    html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif; font-size: 16px; color: var(--text-primary); background: var(--bg); -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+    .app { display: flex; flex-direction: column; height: 100%; max-width: 480px; margin: 0 auto; background: var(--bg); }
+    .header { flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 12px 16px; background: var(--bg); border-bottom: 1px solid var(--border); position: relative; z-index: 10; }
+    .header-title { font-size: 18px; font-weight: 700; color: var(--primary); letter-spacing: -0.3px; }
+    .header-subtitle { font-size: 11px; color: var(--text-secondary); margin-left: 8px; margin-top: 2px; }
+    .btn-history, .btn-settings { position: absolute; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border: none; border-radius: 50%; background: transparent; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
+    .btn-history { left: 12px; } .btn-settings { right: 12px; }
+    .btn-history:active, .btn-settings:active { background: var(--bg-chat); }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: flex; align-items: flex-end; justify-content: center; animation: fadeInOverlay 0.2s ease-out; }
+    @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
+    .modal-overlay.closing { animation: fadeOutOverlay 0.15s ease-in forwards; }
+    @keyframes fadeOutOverlay { from { opacity: 1; } to { opacity: 0; } }
+    .modal { background: var(--bg); border-radius: 16px 16px 0 0; width: 100%; max-width: 480px; padding: 20px 16px calc(20px + var(--safe-bottom)); animation: slideUp 0.25s ease-out; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-overlay.closing .modal { animation: slideDown 0.15s ease-in forwards; }
+    @keyframes slideDown { from { transform: translateY(0); } to { transform: translateY(100%); } }
+    .modal-title { font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 14px; text-align: center; }
+    .modal-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+    .modal-hint { font-size: 12px; color: var(--text-secondary); margin-top: 6px; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+    .btn-cancel { flex: 1; padding: 12px; border: 1.5px solid var(--border); border-radius: 12px; background: var(--bg); color: var(--text-primary); font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
     .btn-cancel:active { background: var(--bg-chat); }
-
-    .modal-select {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: 12px;
-      font-size: 14px;
-      outline: none;
-      background: var(--bg-chat);
-      color: var(--text-primary);
-      font-family: inherit;
-      appearance: none;
-      -webkit-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 14px center;
-      padding-right: 36px;
-      cursor: pointer;
-      transition: border-color 0.15s;
-    }
-
-    .modal-select:focus {
-      border-color: var(--primary);
-    }
-
+    .modal-select { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 14px; outline: none; background: var(--bg-chat); color: var(--text-primary); font-family: inherit; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer; transition: border-color 0.15s; }
+    .modal-select:focus { border-color: var(--primary); }
     .modal-section { margin-bottom: 16px; }
-
-    /* ── Notification Toast ── */
-    .toast {
-      position: fixed;
-      top: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 20px;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      z-index: 200;
-      animation: toastIn 0.25s ease-out;
-      pointer-events: none;
-    }
-
-    @keyframes toastIn {
-      from { opacity: 0; transform: translateX(-50%) translateY(-12px); }
-      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-    }
-
-    .toast.success { background: #ECFDF5; color: #059669; }
-    .toast.error   { background: #FEF2F2; color: #DC2626; }
-
-    /* ── Chat Area ── */
-    .chat {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-      background: var(--bg-chat);
-      -webkit-overflow-scrolling: touch;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .chat-empty {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-secondary);
-      text-align: center;
-      padding: 32px;
-    }
-
-    .chat-empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.6; }
-    .chat-empty-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
-    .chat-empty-desc { font-size: 14px; line-height: 1.5; max-width: 260px; }
-
-    /* ── Message Bubbles ── */
-    .message {
-      display: flex;
-      flex-direction: column;
-      max-width: 85%;
-      animation: fadeIn 0.25s ease-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .message.user { align-self: flex-end; align-items: flex-end; }
-    .message.ai { align-self: flex-start; align-items: flex-start; }
-
-    .bubble {
-      padding: 10px 14px;
-      border-radius: 18px;
-      font-size: 15px;
-      line-height: 1.55;
-      word-break: break-word;
-      position: relative;
-    }
-
-    .message.user .bubble { background: var(--bubble-user); color: #FFFFFF; border-bottom-right-radius: 6px; }
-    .message.ai .bubble { background: var(--bubble-ai); color: var(--text-primary); border-bottom-left-radius: 6px; }
-
-    .hl-error { color: #DC2626; background: #FEF2F2; padding: 1px 4px; border-radius: 3px; font-weight: 500; }
-    .hl-word { color: #059669; background: #ECFDF5; padding: 1px 4px; border-radius: 3px; font-weight: 600; }
-
-    /* ── Play Button ── */
+    .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; z-index: 200; animation: toastIn 0.25s ease-out; pointer-events: none; }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+    .toast.success { background: #ECFDF5; color: #059669; } .toast.error { background: #FEF2F2; color: #DC2626; }
+    .chat { flex: 1; overflow-y: auto; padding: 16px; background: var(--bg-chat); -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 12px; }
+    .chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); text-align: center; padding: 32px; }
+    .chat-empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.6; } .chat-empty-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; } .chat-empty-desc { font-size: 14px; line-height: 1.5; max-width: 260px; }
+    .message { display: flex; flex-direction: column; max-width: 85%; animation: fadeIn 0.25s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .message.user { align-self: flex-end; align-items: flex-end; } .message.ai { align-self: flex-start; align-items: flex-start; }
+    .bubble { padding: 10px 14px; border-radius: 18px; font-size: 15px; line-height: 1.55; word-break: break-word; position: relative; }
+    .message.user .bubble { background: var(--bubble-user); color: #FFFFFF; border-bottom-right-radius: 6px; } .message.ai .bubble { background: var(--bubble-ai); color: var(--text-primary); border-bottom-left-radius: 6px; }
+    .hl-error { color: #DC2626; background: #FEF2F2; padding: 1px 4px; border-radius: 3px; font-weight: 500; } .hl-word { color: #059669; background: #ECFDF5; padding: 1px 4px; border-radius: 3px; font-weight: 600; }
     .msg-actions { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
-
-    .btn-play {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 10px;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      background: var(--bg);
-      color: var(--text-secondary);
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.15s;
-      -webkit-tap-highlight-color: transparent;
-    }
-
+    .btn-play { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg); color: var(--text-secondary); font-size: 12px; cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
     .btn-play:active, .btn-play.playing { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
-    .btn-play svg { width: 14px; height: 14px; }
-    .msg-time { font-size: 11px; color: var(--text-secondary); opacity: 0.7; }
-
-    /* ── Input Area ── */
-    .input-area {
-      flex-shrink: 0;
-      padding: 10px 12px calc(10px + var(--safe-bottom));
-      background: var(--bg);
-      border-top: 1px solid var(--border);
-      display: flex;
-      gap: 8px;
-      align-items: flex-end;
-    }
-
-    .input-box {
-      flex: 1;
-      padding: 10px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: 22px;
-      font-size: 15px;
-      line-height: 1.4;
-      resize: none;
-      outline: none;
-      background: var(--bg-chat);
-      color: var(--text-primary);
-      font-family: inherit;
-      transition: border-color 0.15s;
-      max-height: 100px;
-    }
-
-    .input-box:focus { border-color: var(--primary); }
-    .input-box::placeholder { color: #9CA3AF; font-size: 14px; }
-
-    .btn-send, .btn-mic {
-      flex-shrink: 0;
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.15s;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .btn-send { border: none; background: var(--primary); color: #FFF; font-size: 18px; }
-    .btn-send:active { transform: scale(0.93); }
-    .btn-send:disabled { opacity: 0.35; cursor: default; transform: none; }
-
-    .btn-mic { border: 1.5px solid var(--border); background: var(--bg); color: var(--text-secondary); position: relative; }
-    .btn-mic:active { background: var(--bg-chat); }
-    .btn-mic.unsupported { display: none; }
-
-    .btn-mic.recording {
-      background: #EF4444; border-color: #EF4444; color: #FFFFFF;
-      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
-      animation: micPulse 1.6s ease-out infinite;
-    }
-
-    @keyframes micPulse {
-      0%   { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
-      70%  { box-shadow: 0 0 0 14px rgba(239, 68, 68, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-    }
-
-    .btn-mic .wave-bars { display: none; gap: 2px; align-items: flex-end; height: 16px; }
-    .btn-mic.recording .mic-icon { display: none; }
-    .btn-mic.recording .wave-bars { display: flex; }
+    .btn-play svg { width: 14px; height: 14px; } .msg-time { font-size: 11px; color: var(--text-secondary); opacity: 0.7; }
+    .input-area { flex-shrink: 0; padding: 10px 12px calc(10px + var(--safe-bottom)); background: var(--bg); border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: flex-end; }
+    .input-box { flex: 1; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 22px; font-size: 15px; line-height: 1.4; resize: none; outline: none; background: var(--bg-chat); color: var(--text-primary); font-family: inherit; transition: border-color 0.15s; max-height: 100px; }
+    .input-box:focus { border-color: var(--primary); } .input-box::placeholder { color: #9CA3AF; font-size: 14px; }
+    .btn-send, .btn-mic { flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+    .btn-send { border: none; background: var(--primary); color: #FFF; font-size: 18px; } .btn-send:active { transform: scale(0.93); } .btn-send:disabled { opacity: 0.35; cursor: default; transform: none; }
+    .btn-mic { border: 1.5px solid var(--border); background: var(--bg); color: var(--text-secondary); position: relative; } .btn-mic:active { background: var(--bg-chat); } .btn-mic.unsupported { display: none; }
+    .btn-mic.recording { background: #EF4444; border-color: #EF4444; color: #FFFFFF; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); animation: micPulse 1.6s ease-out infinite; }
+    @keyframes micPulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); } 70% { box-shadow: 0 0 0 14px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+    .btn-mic .wave-bars { display: none; gap: 2px; align-items: flex-end; height: 16px; } .btn-mic.recording .mic-icon { display: none; } .btn-mic.recording .wave-bars { display: flex; }
     .wave-bar { width: 3px; border-radius: 2px; background: #FFF; animation: waveAnim 0.7s ease-in-out infinite alternate; }
-    .wave-bar:nth-child(1) { height: 8px;  animation-delay: 0s; }
-    .wave-bar:nth-child(2) { height: 14px; animation-delay: 0.1s; }
-    .wave-bar:nth-child(3) { height: 10px; animation-delay: 0.2s; }
-    .wave-bar:nth-child(4) { height: 16px; animation-delay: 0.3s; }
-    .wave-bar:nth-child(5) { height: 9px;  animation-delay: 0.4s; }
-
-    @keyframes waveAnim {
-      0%   { transform: scaleY(0.5); opacity: 0.6; }
-      100% { transform: scaleY(1);   opacity: 1; }
-    }
-
-    .transcript-hint {
-      position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
-      background: rgba(0,0,0,0.78); color: #FFF; font-size: 12px; padding: 4px 10px;
-      border-radius: 10px; white-space: nowrap; max-width: 180px; overflow: hidden;
-      text-overflow: ellipsis; pointer-events: none; opacity: 0; transition: opacity 0.2s;
-    }
+    .wave-bar:nth-child(1) { height: 8px; animation-delay: 0s; } .wave-bar:nth-child(2) { height: 14px; animation-delay: 0.1s; } .wave-bar:nth-child(3) { height: 10px; animation-delay: 0.2s; } .wave-bar:nth-child(4) { height: 16px; animation-delay: 0.3s; } .wave-bar:nth-child(5) { height: 9px; animation-delay: 0.4s; }
+    @keyframes waveAnim { 0% { transform: scaleY(0.5); opacity: 0.6; } 100% { transform: scaleY(1); opacity: 1; } }
+    .transcript-hint { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.78); color: #FFF; font-size: 12px; padding: 4px 10px; border-radius: 10px; white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis; pointer-events: none; opacity: 0; transition: opacity 0.2s; }
     .btn-mic.recording .transcript-hint { opacity: 1; }
-
-    /* ── Report Button ── */
     .report-trigger-wrap { flex-shrink: 0; display: flex; justify-content: center; padding: 8px 16px 0; background: var(--bg); }
-    .btn-report {
-      width: 100%; padding: 12px 20px; border: none; border-radius: 14px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #FFF;
-      font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer;
-      position: relative; overflow: hidden; transition: transform 0.15s, box-shadow 0.2s;
-      box-shadow: 0 2px 12px rgba(102, 126, 234, 0.35); -webkit-tap-highlight-color: transparent; letter-spacing: 0.5px;
-    }
-    .btn-report:active { transform: scale(0.97); box-shadow: 0 4px 20px rgba(102, 126, 234, 0.55); }
-    .btn-report:disabled { opacity: 0.5; cursor: default; transform: none; }
-
-    /* ── Report & History Bottom Sheet / Modal logic ── */
-    .sheet-overlay, .detail-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 150;
-      display: flex; align-items: flex-end; justify-content: center; animation: fadeInOverlay 0.25s ease-out;
-    }
+    .btn-report { width: 100%; padding: 12px 20px; border: none; border-radius: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #FFF; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; position: relative; overflow: hidden; transition: transform 0.15s, box-shadow 0.2s; box-shadow: 0 2px 12px rgba(102, 126, 234, 0.35); -webkit-tap-highlight-color: transparent; letter-spacing: 0.5px; }
+    .btn-report:active { transform: scale(0.97); box-shadow: 0 4px 20px rgba(102, 126, 234, 0.55); } .btn-report:disabled { opacity: 0.5; cursor: default; transform: none; }
+    .sheet-overlay, .detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 150; display: flex; align-items: flex-end; justify-content: center; animation: fadeInOverlay 0.25s ease-out; }
     .sheet-overlay.closing, .detail-overlay.closing { animation: fadeOutOverlay 0.2s ease-in forwards; }
-    .sheet, .detail-sheet {
-      background: rgba(255,255,255,0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; max-height: 88vh;
-      overflow-y: auto; padding: 0 20px calc(20px + var(--safe-bottom));
-      animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); -webkit-overflow-scrolling: touch;
-    }
+    .sheet, .detail-sheet { background: rgba(255,255,255,0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; max-height: 88vh; overflow-y: auto; padding: 0 20px calc(20px + var(--safe-bottom)); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); -webkit-overflow-scrolling: touch; }
     .sheet-overlay.closing .sheet, .detail-overlay.closing .detail-sheet { animation: slideDown 0.2s ease-in forwards; }
     .sheet-handle, .detail-handle { width: 36px; height: 5px; background: #D1D5DB; border-radius: 3px; margin: 10px auto 0; }
-    .sheet-header, .detail-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 0 8px; position: sticky; top: 0; background: inherit; z-index: 2;
-    }
+    .sheet-header, .detail-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0 8px; position: sticky; top: 0; background: inherit; z-index: 2; }
     .sheet-title, .detail-date { font-size: 18px; font-weight: 700; color: var(--text-primary); }
-    .btn-close {
-      width: 32px; height: 32px; border: none; border-radius: 50%; background: rgba(0,0,0,0.06);
-      color: var(--text-secondary); font-size: 18px; cursor: pointer; display: flex;
-      align-items: center; justify-content: center; transition: background 0.15s;
-    }
-    .btn-close:active { background: rgba(0,0,0,0.12); }
-
+    .btn-close { width: 32px; height: 32px; border: none; border-radius: 50%; background: rgba(0,0,0,0.06); color: var(--text-secondary); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; } .btn-close:active { background: rgba(0,0,0,0.12); }
     .report-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 20px; gap: 20px; }
-    .loading-spinner { width: 44px; height: 44px; border: 4px solid #E5E7EB; border-top-color: #667eea; border-radius: 50%; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-text { color: var(--text-secondary); font-size: 14px; }
-    .loading-dots::after { content: ''; animation: dots 1.5s steps(4, end) infinite; }
-    @keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } 100% { content: ''; } }
-
+    .loading-spinner { width: 44px; height: 44px; border: 4px solid #E5E7EB; border-top-color: #667eea; border-radius: 50%; animation: spin 0.8s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: var(--text-secondary); font-size: 14px; } .loading-dots::after { content: ''; animation: dots 1.5s steps(4, end) infinite; } @keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } 100% { content: ''; } }
     .report-content { display: none; }
     .score-section { display: flex; flex-direction: column; align-items: center; padding: 16px 0 20px; }
-    .score-circle {
-      width: 100px; height: 100px; border-radius: 50%; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; font-weight: 800; position: relative;
-    }
-    .score-circle::before {
-      content: ''; position: absolute; inset: -6px; border-radius: 50%;
-      background: conic-gradient(#667eea calc(var(--score-pct) * 1%), #E5E7EB 0);
-      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 5px));
-      mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 5px));
-    }
-    .score-num { font-size: 36px; color: #4F46E5; line-height: 1; }
-    .score-label { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+    .score-circle { width: 100px; height: 100px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 800; position: relative; }
+    .score-circle::before { content: ''; position: absolute; inset: -6px; border-radius: 50%; background: conic-gradient(#667eea calc(var(--score-pct) * 1%), #E5E7EB 0); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 5px)); mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 5px)); }
+    .score-num { font-size: 36px; color: #4F46E5; line-height: 1; } .score-label { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
     .score-summary { text-align: center; color: var(--text-primary); font-size: 14px; line-height: 1.6; margin-top: 12px; padding: 0 10px; }
-
-    .report-section { margin-bottom: 18px; }
-    .report-section-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .report-section { margin-bottom: 18px; } .report-section-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
     .vocab-card { background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%); border: 1px solid #A7F3D0; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
-    .vocab-word { font-size: 16px; font-weight: 700; color: #059669; min-width: 60px; }
-    .vocab-meta { font-size: 12px; color: var(--text-secondary); }
-    .vocab-pos { display: inline-block; background: #D1FAE5; color: #047857; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-right: 6px; }
-    .vocab-meaning { font-size: 13px; color: var(--text-primary); margin-top: 3px; }
-
+    .vocab-word { font-size: 16px; font-weight: 700; color: #059669; min-width: 60px; } .vocab-meta { font-size: 12px; color: var(--text-secondary); } .vocab-pos { display: inline-block; background: #D1FAE5; color: #047857; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-right: 6px; } .vocab-meaning { font-size: 13px; color: var(--text-primary); margin-top: 3px; }
     .corr-card { background: linear-gradient(135deg, #FFF7ED 0%, #FFF1F2 100%); border: 1px solid #FECDD3; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; }
-    .corr-original { font-size: 14px; color: #DC2626; text-decoration: line-through; margin-bottom: 4px; }
-    .corr-correct { font-size: 14px; color: #059669; font-weight: 600; }
-    .corr-explain { font-size: 12px; color: var(--text-secondary); margin-top: 4px; line-height: 1.5; }
-
-    /* ── History View ── */
-    .history-view {
-      position: fixed; inset: 0; background: var(--bg); z-index: 120;
-      display: flex; flex-direction: column; max-width: 480px; margin: 0 auto;
-      transform: translateX(105%); transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
-    }
+    .corr-original { font-size: 14px; color: #DC2626; text-decoration: line-through; margin-bottom: 4px; } .corr-correct { font-size: 14px; color: #059669; font-weight: 600; } .corr-explain { font-size: 12px; color: var(--text-secondary); margin-top: 4px; line-height: 1.5; }
+    .history-view { position: fixed; inset: 0; background: var(--bg); z-index: 120; display: flex; flex-direction: column; max-width: 480px; margin: 0 auto; transform: translateX(105%); transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1); }
     .history-view.open { transform: translateX(0); }
     .history-header { flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg); }
-    .btn-back { width: 34px; height: 34px; border: none; border-radius: 50%; background: transparent; color: var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-    .btn-back:active { background: var(--bg-chat); }
+    .btn-back { width: 34px; height: 34px; border: none; border-radius: 50%; background: transparent; color: var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; } .btn-back:active { background: var(--bg-chat); }
     .history-header-title { font-size: 17px; font-weight: 700; color: var(--text-primary); }
     .history-list { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
     .history-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); text-align: center; padding: 32px; }
-    
-    .day-card { background: var(--bg); border: 1.5px solid var(--border); border-radius: 16px; padding: 16px; cursor: pointer; transition: border-color 0.15s; }
-    .day-card:active { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.08); }
-    .day-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-    .day-card-date { font-size: 15px; font-weight: 700; color: var(--text-primary); }
-    .day-card-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 10px; background: var(--primary-light); color: var(--primary); }
-    .day-card-badge.has-report { background: #ECFDF5; color: #059669; }
-    .day-card-stats { display: flex; gap: 16px; font-size: 13px; color: var(--text-secondary); }
-    .day-card-preview { font-size: 13px; color: var(--text-secondary); margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; }
-    
-    .detail-chat-log { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
-    .detail-msg { max-width: 85%; padding: 8px 14px; border-radius: 16px; font-size: 14px; line-height: 1.5; }
-    .detail-msg.user { align-self: flex-end; background: var(--bubble-user); color: #FFF; border-bottom-right-radius: 6px; }
-    .detail-msg.ai { align-self: flex-start; background: var(--bubble-ai); color: var(--text-primary); border-bottom-left-radius: 6px; }
-    .detail-msg-time { font-size: 10px; opacity: 0.6; margin-top: 2px; }
-    .detail-report-section { margin-top: 12px; padding: 14px; background: linear-gradient(135deg, #F5F3FF 0%, #EEF2FF 100%); border-radius: 14px; border: 1px solid #DDD6FE; }
-    .detail-report-title { font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
-
-    /* ── Typing Indicator ── */
-    .typing { align-self: flex-start; display: flex; gap: 4px; padding: 12px 16px; }
-    .typing-dot { width: 7px; height: 7px; border-radius: 50%; background: #D1D5DB; animation: bounce 1.2s infinite ease-in-out; }
-    .typing-dot:nth-child(2) { animation-delay: 0.15s; }
-    .typing-dot:nth-child(3) { animation-delay: 0.3s; }
-    @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+    .day-card { background: var(--bg); border: 1.5px solid var(--border); border-radius: 16px; padding: 16px; cursor: pointer; transition: border-color 0.15s; } .day-card:active { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.08); }
+    .day-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; } .day-card-date { font-size: 15px; font-weight: 700; color: var(--text-primary); } .day-card-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 10px; background: var(--primary-light); color: var(--primary); } .day-card-badge.has-report { background: #ECFDF5; color: #059669; }
+    .day-card-stats { display: flex; gap: 16px; font-size: 13px; color: var(--text-secondary); } .day-card-preview { font-size: 13px; color: var(--text-secondary); margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; }
+    .detail-chat-log { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; } .detail-msg { max-width: 85%; padding: 8px 14px; border-radius: 16px; font-size: 14px; line-height: 1.5; } .detail-msg.user { align-self: flex-end; background: var(--bubble-user); color: #FFF; border-bottom-right-radius: 6px; } .detail-msg.ai { align-self: flex-start; background: var(--bubble-ai); color: var(--text-primary); border-bottom-left-radius: 6px; } .detail-msg-time { font-size: 10px; opacity: 0.6; margin-top: 2px; }
+    .detail-report-section { margin-top: 12px; padding: 14px; background: linear-gradient(135deg, #F5F3FF 0%, #EEF2FF 100%); border-radius: 14px; border: 1px solid #DDD6FE; } .detail-report-title { font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+    .typing { align-self: flex-start; display: flex; gap: 4px; padding: 12px 16px; } .typing-dot { width: 7px; height: 7px; border-radius: 50%; background: #D1D5DB; animation: bounce 1.2s infinite ease-in-out; } .typing-dot:nth-child(2) { animation-delay: 0.15s; } .typing-dot:nth-child(3) { animation-delay: 0.3s; } @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
   </style>
 </head>
 <body>
   <div class="app">
-    <!-- Header -->
     <header class="header">
-      <button class="btn-history" id="btnHistory" aria-label="历史记录" title="历史记录">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-          <line x1="16" y1="2" x2="16" y2="6"></line>
-          <line x1="8" y1="2" x2="8" y2="6"></line>
-          <line x1="3" y1="10" x2="21" y2="10"></line>
-        </svg>
-      </button>
+      <button class="btn-history" id="btnHistory" aria-label="历史记录" title="历史记录"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></button>
       <span class="header-title">LingoFlow</span>
       <span class="header-subtitle">AI 英语陪练</span>
-      <button class="btn-settings" id="btnSettings" aria-label="Settings" title="设置音色">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-        </svg>
-      </button>
+      <button class="btn-settings" id="btnSettings" aria-label="Settings" title="设置音色"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
     </header>
-
     <div class="toast error" id="toast" style="display:none"></div>
-
     <div class="modal-overlay" id="modalOverlay" style="display:none">
       <div class="modal">
         <div class="modal-title">音色设置</div>
-        <div class="modal-section">
-          <label class="modal-label" for="voiceSelect">朗读音色</label>
-          <select class="modal-select" id="voiceSelect">
-            <option value="">加载中…</option>
-          </select>
-          <div class="modal-hint" id="voiceHint" style="display:none"></div>
-          <button class="btn-play" type="button" id="btnRefreshVoices" style="margin-top:8px;width:100%;justify-content:center;gap:6px;font-size:13px;padding:8px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> 刷新音色列表
-          </button>
-        </div>
-        <div class="modal-actions">
-          <button class="btn-cancel" id="btnCancel">关闭</button>
-        </div>
+        <div class="modal-section"><label class="modal-label" for="voiceSelect">朗读音色</label><select class="modal-select" id="voiceSelect"><option value="">加载中…</option></select><div class="modal-hint" id="voiceHint" style="display:none"></div><button class="btn-play" type="button" id="btnRefreshVoices" style="margin-top:8px;width:100%;justify-content:center;gap:6px;font-size:13px;padding:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> 刷新音色列表</button></div>
+        <div class="modal-actions"><button class="btn-cancel" id="btnCancel">关闭</button></div>
       </div>
     </div>
-
     <div class="sheet-overlay" id="sheetOverlay" style="display:none">
       <div class="sheet" id="sheet">
         <div class="sheet-handle"></div>
-        <div class="sheet-header">
-          <span class="sheet-title">今日复盘报告</span>
-          <button class="btn-close" id="btnCloseReport" aria-label="关闭">✕</button>
-        </div>
-        <div class="report-loading" id="reportLoading">
-          <div class="loading-spinner"></div>
-          <div class="loading-text">AI 正在分析你的对话<span class="loading-dots"></span></div>
-        </div>
+        <div class="sheet-header"><span class="sheet-title">今日复盘报告</span><button class="btn-close" id="btnCloseReport">✕</button></div>
+        <div class="report-loading" id="reportLoading"><div class="loading-spinner"></div><div class="loading-text">AI 正在分析你的对话<span class="loading-dots"></span></div></div>
         <div class="report-content" id="reportContent"></div>
       </div>
     </div>
-
     <main class="chat" id="chat" aria-live="polite">
       <div class="chat-empty" id="chatEmpty">
-        <div class="chat-empty-icon">💬</div>
-        <div class="chat-empty-title">开始聊天吧</div>
-        <div class="chat-empty-desc">中英混说都可以，AI 会帮你转化为地道英文并指出错误。</div>
+        <div class="chat-empty-icon">💬</div><div class="chat-empty-title">开始聊天吧</div><div class="chat-empty-desc">中英混说都可以，AI 会帮你转化为地道英文并指出错误。</div>
       </div>
     </main>
-
-    <div class="report-trigger-wrap" id="reportTriggerWrap">
-      <button class="btn-report" id="btnReport" disabled>✨ 生成今日复盘报告</button>
-    </div>
-
+    <div class="report-trigger-wrap" id="reportTriggerWrap"><button class="btn-report" id="btnReport" disabled>✨ 生成今日复盘报告</button></div>
     <footer class="input-area">
       <textarea class="input-box" id="inputBox" rows="1" placeholder="输入中英混杂的内容…" autocomplete="off" enterkeyhint="send"></textarea>
-      <button class="btn-mic" id="btnMic" aria-label="语音输入" title="语音输入">
-        <svg class="mic-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-          <line x1="12" y1="19" x2="12" y2="23"></line>
-          <line x1="8" y1="23" x2="16" y2="23"></line>
-        </svg>
-        <span class="wave-bars">
-          <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
-        </span>
-        <span class="transcript-hint" id="transcriptHint">聆听中…</span>
-      </button>
-      <button class="btn-send" id="btnSend" disabled aria-label="Send message">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="22" y1="2" x2="11" y2="13"></line>
-          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-        </svg>
-      </button>
+      <button class="btn-mic" id="btnMic"><svg class="mic-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg><span class="wave-bars"><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span></span><span class="transcript-hint" id="transcriptHint">聆听中…</span></button>
+      <button class="btn-send" id="btnSend" disabled><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></button>
     </footer>
   </div>
-
   <div class="history-view" id="historyView">
-    <div class="history-header">
-      <button class="btn-back" id="btnBack" aria-label="返回">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="19" y1="12" x2="5" y2="12"></line>
-          <polyline points="12 19 5 12 12 5"></polyline>
-        </svg>
-      </button>
-      <span class="history-header-title">历史记录</span>
-    </div>
-    <div class="history-list" id="historyList">
-      <div class="history-empty">加载中…</div>
-    </div>
+    <div class="history-header"><button class="btn-back" id="btnBack"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button><span class="history-header-title">历史记录</span></div>
+    <div class="history-list" id="historyList"><div class="history-empty">加载中…</div></div>
   </div>
-
   <div class="detail-overlay" id="detailOverlay" style="display:none">
     <div class="detail-sheet" id="detailSheet">
-      <div class="detail-handle"></div>
-      <div class="detail-header">
-        <span class="detail-date" id="detailDate"></span>
-        <button class="btn-close" id="btnCloseDetail" aria-label="关闭">✕</button>
-      </div>
+      <div class="detail-handle"></div><div class="detail-header"><span class="detail-date" id="detailDate"></span><button class="btn-close" id="btnCloseDetail">✕</button></div>
       <div id="detailBody"></div>
     </div>
   </div>
 
   <script>
-    const chat = document.getElementById('chat');
-    const chatEmpty = document.getElementById('chatEmpty');
-    const inputBox = document.getElementById('inputBox');
-    const btnSend = document.getElementById('btnSend');
-    const btnMic = document.getElementById('btnMic');
-    const transcriptHint = document.getElementById('transcriptHint');
-    const btnSettings = document.getElementById('btnSettings');
-    const modalOverlay = document.getElementById('modalOverlay');
-    const voiceSelect = document.getElementById('voiceSelect');
-    const voiceHint = document.getElementById('voiceHint');
-    const btnRefreshVoices = document.getElementById('btnRefreshVoices');
-    const btnCancel = document.getElementById('btnCancel');
-    const toast = document.getElementById('toast');
-    const btnReport = document.getElementById('btnReport');
-    const sheetOverlay = document.getElementById('sheetOverlay');
-    const reportLoading = document.getElementById('reportLoading');
-    const reportContent = document.getElementById('reportContent');
-    const btnCloseReport = document.getElementById('btnCloseReport');
-    const btnHistory = document.getElementById('btnHistory');
-    const historyView = document.getElementById('historyView');
-    const historyList = document.getElementById('historyList');
-    const btnBack = document.getElementById('btnBack');
-    const detailOverlay = document.getElementById('detailOverlay');
-    const detailDate = document.getElementById('detailDate');
-    const detailBody = document.getElementById('detailBody');
-    const btnCloseDetail = document.getElementById('btnCloseDetail');
+    const chat = document.getElementById('chat'), chatEmpty = document.getElementById('chatEmpty'), inputBox = document.getElementById('inputBox'), btnSend = document.getElementById('btnSend'), btnMic = document.getElementById('btnMic'), transcriptHint = document.getElementById('transcriptHint'), btnSettings = document.getElementById('btnSettings'), modalOverlay = document.getElementById('modalOverlay'), voiceSelect = document.getElementById('voiceSelect'), voiceHint = document.getElementById('voiceHint'), btnRefreshVoices = document.getElementById('btnRefreshVoices'), btnCancel = document.getElementById('btnCancel'), toast = document.getElementById('toast'), btnReport = document.getElementById('btnReport'), sheetOverlay = document.getElementById('sheetOverlay'), reportLoading = document.getElementById('reportLoading'), reportContent = document.getElementById('reportContent'), btnCloseReport = document.getElementById('btnCloseReport'), btnHistory = document.getElementById('btnHistory'), historyView = document.getElementById('historyView'), historyList = document.getElementById('historyList'), btnBack = document.getElementById('btnBack'), detailOverlay = document.getElementById('detailOverlay'), detailDate = document.getElementById('detailDate'), detailBody = document.getElementById('detailBody'), btnCloseDetail = document.getElementById('btnCloseDetail');
 
     const API_URL = 'https://api.deepseek.com/v1/chat/completions';
     const MODEL = 'deepseek-chat';
-    const GLOBAL_API_KEY = 'sk-3ce71cdbeb3c4f01be41463e9d22d39d'; // 你的真实密钥保留在此
+    const GLOBAL_API_KEY = 'sk-3ce71cdbeb3c4f01be41463e9d22d39d'; // 真实密钥
 
-    let messages = [];
-    let isLoading = false;
-    let currentActiveDay = todayKey(); // 记录当前页面的日期
-
+    let messages = [], isLoading = false, currentActiveDay = todayKey();
     const STORAGE_PREFIX = 'lingoflow_day_';
 
     function getApiKey() { return GLOBAL_API_KEY; }
+    function todayKey() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+    function loadDay(key) { try { return JSON.parse(localStorage.getItem(STORAGE_PREFIX + key)); } catch { return null; } }
+    function saveDay(key, data) { try { localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(data)); } catch (e) {} }
+    function saveToday() { const day = loadDay(todayKey()) || {}; day.messages = messages.map(m => ({ role: m.role, content: m.content, time: m.time })); saveDay(todayKey(), day); }
+    function saveReportToToday(reportData) { const day = loadDay(todayKey()) || { messages: messages }; day._report = reportData; saveDay(todayKey(), day); }
+    function getAllDayKeys() { const keys = []; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith(STORAGE_PREFIX)) keys.push(key.slice(STORAGE_PREFIX.length)); } return keys.sort((a, b) => b.localeCompare(a)); }
 
-    function todayKey() {
-      const d = new Date();
-      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-    }
-
-    function loadDay(key) {
-      try { return JSON.parse(localStorage.getItem(STORAGE_PREFIX + key)); } catch { return null; }
-    }
-
-    function saveDay(key, data) {
-      try { localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(data)); } catch (e) {}
-    }
-
-    function saveToday() {
-      const day = loadDay(todayKey()) || {};
-      day.messages = messages.map(m => ({ role: m.role, content: m.content, time: m.time }));
-      saveDay(todayKey(), day);
-    }
-
-    function saveReportToToday(reportData) {
-      const day = loadDay(todayKey()) || { messages: messages };
-      day._report = reportData;
-      saveDay(todayKey(), day);
-    }
-
-    function getAllDayKeys() {
-      const keys = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith(STORAGE_PREFIX)) keys.push(key.slice(STORAGE_PREFIX.length));
-      }
-      return keys.sort((a, b) => b.localeCompare(a));
-    }
-
-    /* ── 新增：跨天自动重置逻辑 ── */
     function checkDayReset() {
       const actualToday = todayKey();
       if (currentActiveDay !== actualToday) {
-        currentActiveDay = actualToday;
-        // 清空当前页面和内存记录
-        messages = [];
-        const bubbles = chat.querySelectorAll('.message, .typing');
-        bubbles.forEach(b => b.remove());
-        chatEmpty.style.display = 'flex';
-        btnReport.disabled = true;
-
-        // 尝试加载真正的“今天”是否有新记录
+        currentActiveDay = actualToday; messages = [];
+        chat.querySelectorAll('.message, .typing').forEach(b => b.remove());
+        chatEmpty.style.display = 'flex'; btnReport.disabled = true;
         const todayData = loadDay(actualToday);
         if (todayData && todayData.messages && todayData.messages.length) {
-          messages = todayData.messages;
-          for (const m of messages) renderPersistedMessage(m);
+          messages = todayData.messages; for (const m of messages) renderPersistedMessage(m);
         }
       }
     }
 
-    // 当用户从后台切回网页时，检查是否到了第二天
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') checkDayReset();
-    });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkDayReset(); });
 
+    // 完美修复：先加载今天已有数据，再挂载检查
     (function initFromStorage() {
-      checkDayReset(); // 初始化时也走一遍检查逻辑
+      const todayData = loadDay(todayKey());
+      if (todayData && todayData.messages && todayData.messages.length) {
+        messages = todayData.messages;
+        for (const m of messages) renderPersistedMessage(m);
+      }
+      checkDayReset();
     })();
 
     function renderPersistedMessage(m) {
       hideEmptyState();
-      const wrapper = document.createElement('div');
-      wrapper.className = 'message ' + m.role;
-      const bubble = document.createElement('div');
-      bubble.className = 'bubble';
-      if (m.role === 'ai') bubble.innerHTML = m.content;
-      else bubble.textContent = m.content;
+      const wrapper = document.createElement('div'); wrapper.className = 'message ' + m.role;
+      const bubble = document.createElement('div'); bubble.className = 'bubble';
+      if (m.role === 'ai') bubble.innerHTML = m.content; else bubble.textContent = m.content;
       wrapper.appendChild(bubble);
-
       if (m.role === 'ai') {
-        const actions = document.createElement('div');
-        actions.className = 'msg-actions';
-        const btn = document.createElement('button');
-        btn.className = 'btn-play';
-        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5,3 19,12 5,21"/></svg> 播放';
+        const actions = document.createElement('div'); actions.className = 'msg-actions';
+        const btn = document.createElement('button'); btn.className = 'btn-play'; btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5,3 19,12 5,21"/></svg> 播放';
         btn.addEventListener('click', () => speak(stripHTML(m.content), btn));
         actions.appendChild(btn);
-        const time = document.createElement('span');
-        time.className = 'msg-time';
-        time.textContent = m.time || '';
-        actions.appendChild(time);
-        wrapper.appendChild(actions);
+        const time = document.createElement('span'); time.className = 'msg-time'; time.textContent = m.time || '';
+        actions.appendChild(time); wrapper.appendChild(actions);
       }
       chat.appendChild(wrapper);
     }
 
-    /* ── 语音、设置、杂项 (与原本一致) ── */
     const VOICE_STORAGE_KEY = 'lingoflow_voice_uri';
     function getSavedVoiceURI() { return localStorage.getItem(VOICE_STORAGE_KEY) || ''; }
     function setSavedVoiceURI(uri) { localStorage.setItem(VOICE_STORAGE_KEY, uri); }
     function voiceScore(v) { let s=0; let n=v.name.toLowerCase(); if(n.includes('google'))s+=100; if(n.includes('premium'))s+=90; if(n.includes('online'))s+=80; if(v.localService)s+=10; return s; }
     let speechWarmedUp = false;
     function warmUpSpeech() { if(speechWarmedUp || !('speechSynthesis' in window)) return; speechWarmedUp=true; try{ const u=new SpeechSynthesisUtterance(''); u.volume=0; u.rate=1.5; speechSynthesis.speak(u); setTimeout(()=>{try{speechSynthesis.cancel()}catch(e){}},50); }catch(e){} }
-    document.addEventListener('click', warmUpSpeech, { once: true });
-    document.addEventListener('touchstart', warmUpSpeech, { once: true });
+    document.addEventListener('click', warmUpSpeech, { once: true }); document.addEventListener('touchstart', warmUpSpeech, { once: true });
 
-    async function loadVoices() {
-      return new Promise((resolve) => {
-        if (!('speechSynthesis' in window)) return resolve([]);
-        warmUpSpeech();
-        let voices = speechSynthesis.getVoices();
-        if (voices.length > 0) return resolve(voices);
-        let resolved = false;
-        const handler = () => { if(resolved)return; resolved=true; resolve(speechSynthesis.getVoices()); };
-        speechSynthesis.addEventListener('voiceschanged', handler, { once: true });
-        setTimeout(() => { if(!resolved){ resolved=true; resolve(speechSynthesis.getVoices()); } }, 1500);
-      });
-    }
-
-    async function populateVoiceList() {
-      voiceSelect.innerHTML = '<option value="">加载中…</option>';
-      const allVoices = await loadVoices();
-      const enVoices = allVoices.filter(v => v.lang.startsWith('en-US') || v.lang.startsWith('en-GB')).sort((a,b)=>voiceScore(b)-voiceScore(a));
-      if(!enVoices.length){ voiceSelect.innerHTML='<option value="">无可用英文音色</option>'; return; }
-      let html=''; let savedURI=getSavedVoiceURI();
-      for(const v of enVoices){ const label = voiceScore(v)>=30 ? '⭐ '+v.name : v.name; html+=`<option value="${v.voiceURI}" ${v.voiceURI===savedURI?'selected':''}>${label} (${v.lang})</option>`; }
-      voiceSelect.innerHTML = html;
-    }
-
-    function getSelectedVoice() {
-      if (!('speechSynthesis' in window)) return null;
-      const voices = speechSynthesis.getVoices();
-      const match = voices.find(v => v.voiceURI === getSavedVoiceURI());
-      return match || voices.find(v => v.lang.startsWith('en-US')) || null;
-    }
-
-    let toastTimer;
-    function showToast(msg, type) {
-      clearTimeout(toastTimer); toast.textContent = msg; toast.className = 'toast ' + type;
-      toast.style.display = 'block'; toastTimer = setTimeout(() => toast.style.display = 'none', 2500);
-    }
-
-    btnSettings.addEventListener('click', () => { populateVoiceList(); modalOverlay.style.display = 'flex'; });
-    btnCancel.addEventListener('click', () => { modalOverlay.style.display = 'none'; });
-    voiceSelect.addEventListener('change', () => setSavedVoiceURI(voiceSelect.value));
-    btnRefreshVoices.addEventListener('click', () => { speechWarmedUp=false; warmUpSpeech(); populateVoiceList(); });
-
+    async function loadVoices() { return new Promise((resolve) => { if (!('speechSynthesis' in window)) return resolve([]); warmUpSpeech(); let voices = speechSynthesis.getVoices(); if (voices.length > 0) return resolve(voices); let resolved = false; const handler = () => { if(resolved)return; resolved=true; resolve(speechSynthesis.getVoices()); }; speechSynthesis.addEventListener('voiceschanged', handler, { once: true }); setTimeout(() => { if(!resolved){ resolved=true; resolve(speechSynthesis.getVoices()); } }, 1500); }); }
+    async function populateVoiceList() { voiceSelect.innerHTML = '<option value="">加载中…</option>'; const allVoices = await loadVoices(); const enVoices = allVoices.filter(v => v.lang.startsWith('en-US') || v.lang.startsWith('en-GB')).sort((a,b)=>voiceScore(b)-voiceScore(a)); if(!enVoices.length){ voiceSelect.innerHTML='<option value="">无可用英文音色</option>'; return; } let html=''; let savedURI=getSavedVoiceURI(); for(const v of enVoices){ const label = voiceScore(v)>=30 ? '⭐ '+v.name : v.name; html+=`<option value="${v.voiceURI}" ${v.voiceURI===savedURI?'selected':''}>${label} (${v.lang})</option>`; } voiceSelect.innerHTML = html; }
+    function getSelectedVoice() { if (!('speechSynthesis' in window)) return null; const voices = speechSynthesis.getVoices(); const match = voices.find(v => v.voiceURI === getSavedVoiceURI()); return match || voices.find(v => v.lang.startsWith('en-US')) || null; }
+    let toastTimer; function showToast(msg, type) { clearTimeout(toastTimer); toast.textContent = msg; toast.className = 'toast ' + type; toast.style.display = 'block'; toastTimer = setTimeout(() => toast.style.display = 'none', 2500); }
+    btnSettings.addEventListener('click', () => { populateVoiceList(); modalOverlay.style.display = 'flex'; }); btnCancel.addEventListener('click', () => { modalOverlay.style.display = 'none'; }); voiceSelect.addEventListener('change', () => setSavedVoiceURI(voiceSelect.value)); btnRefreshVoices.addEventListener('click', () => { speechWarmedUp=false; warmUpSpeech(); populateVoiceList(); });
     function escapeHTML(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
     function formatTime() { const d = new Date(); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
     function stripHTML(html) { const doc = new DOMParser().parseFromString(html, 'text/html'); return doc.body.textContent || ''; }
+    function sanitizeHTML(html) { let text = html.replace(/```html\s*/gi, '').replace(/
+```\s*/g, '').trim(); const doc = new DOMParser().parseFromString(text, 'text/html'); function walk(node) { const allowed = []; for (const child of node.childNodes) { if (child.nodeType === Node.TEXT_NODE) allowed.push(document.createTextNode(child.textContent)); else if (child.nodeType === Node.ELEMENT_NODE) { if (child.tagName === 'SPAN' && (child.classList.contains('hl-word') || child.classList.contains('hl-error'))) { const span = document.createElement('span'); span.className = child.className; span.append(...walk(child)); allowed.push(span); } else allowed.push(...walk(child)); } } return allowed; } const container = document.createElement('div'); container.append(...walk(doc.body)); return container.innerHTML; }
+    inputBox.addEventListener('input', () => { inputBox.style.height = 'auto'; inputBox.style.height = Math.min(inputBox.scrollHeight, 100) + 'px'; btnSend.disabled = inputBox.value.trim() === '' || isLoading; });
 
-    function sanitizeHTML(html) {
-      let text = html.replace(/```html\s*/gi, '').replace(/
-```\s*/g, '').trim();
-      const doc = new DOMParser().parseFromString(text, 'text/html');
-      function walk(node) {
-        const allowed = [];
-        for (const child of node.childNodes) {
-          if (child.nodeType === Node.TEXT_NODE) allowed.push(document.createTextNode(child.textContent));
-          else if (child.nodeType === Node.ELEMENT_NODE) {
-            if (child.tagName === 'SPAN' && (child.classList.contains('hl-word') || child.classList.contains('hl-error'))) {
-              const span = document.createElement('span'); span.className = child.className; span.append(...walk(child)); allowed.push(span);
-            } else allowed.push(...walk(child));
-          }
-        }
-        return allowed;
-      }
-      const container = document.createElement('div'); container.append(...walk(doc.body)); return container.innerHTML;
-    }
-
-    inputBox.addEventListener('input', () => {
-      inputBox.style.height = 'auto'; inputBox.style.height = Math.min(inputBox.scrollHeight, 100) + 'px';
-      btnSend.disabled = inputBox.value.trim() === '' || isLoading;
-    });
-
-    /* ── STT ── */
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognition = null, isRecording = false, finalTranscript = '';
     if (!SpeechRecognition) btnMic.classList.add('unsupported');
-
-    function initRecognition() {
-      if (!SpeechRecognition) return null;
-      const rec = new SpeechRecognition(); rec.lang = 'zh-CN'; rec.continuous = true; rec.interimResults = true;
-      rec.addEventListener('result', (e) => {
-        let interim = '';
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript; else interim += e.results[i][0].transcript;
-        }
-        const display = finalTranscript + interim;
-        transcriptHint.textContent = display || '聆听中…';
-        if (display) { inputBox.value = display; inputBox.dispatchEvent(new Event('input')); }
-      });
-      rec.addEventListener('end', () => { if(finalTranscript.trim()){ inputBox.value = finalTranscript.trim(); inputBox.dispatchEvent(new Event('input')); } stopRecording(); });
-      rec.addEventListener('speechend', () => rec.stop());
-      rec.addEventListener('error', () => stopRecording());
-      return rec;
-    }
-    function startRecording() {
-      if (isRecording || isLoading) return;
-      finalTranscript = ''; if (!recognition) recognition = initRecognition();
-      if (!recognition) return;
-      try { recognition.start(); } catch (e) { recognition = initRecognition(); if(recognition) recognition.start(); else return; }
-      isRecording = true; btnMic.classList.add('recording'); transcriptHint.textContent = '聆听中…'; transcriptHint.style.display = '';
-    }
-    function stopRecording() {
-      isRecording = false; btnMic.classList.remove('recording'); transcriptHint.style.display = 'none';
-      if (recognition) try { recognition.stop(); } catch (e) {}
-    }
+    function initRecognition() { if (!SpeechRecognition) return null; const rec = new SpeechRecognition(); rec.lang = 'zh-CN'; rec.continuous = true; rec.interimResults = true; rec.addEventListener('result', (e) => { let interim = ''; for (let i = e.resultIndex; i < e.results.length; i++) { if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript; else interim += e.results[i][0].transcript; } const display = finalTranscript + interim; transcriptHint.textContent = display || '聆听中…'; if (display) { inputBox.value = display; inputBox.dispatchEvent(new Event('input')); } }); rec.addEventListener('end', () => { if(finalTranscript.trim()){ inputBox.value = finalTranscript.trim(); inputBox.dispatchEvent(new Event('input')); } stopRecording(); }); rec.addEventListener('speechend', () => rec.stop()); rec.addEventListener('error', () => stopRecording()); return rec; }
+    function startRecording() { if (isRecording || isLoading) return; finalTranscript = ''; if (!recognition) recognition = initRecognition(); if (!recognition) return; try { recognition.start(); } catch (e) { recognition = initRecognition(); if(recognition) recognition.start(); else return; } isRecording = true; btnMic.classList.add('recording'); transcriptHint.textContent = '聆听中…'; transcriptHint.style.display = ''; }
+    function stopRecording() { isRecording = false; btnMic.classList.remove('recording'); transcriptHint.style.display = 'none'; if (recognition) try { recognition.stop(); } catch (e) {} }
     btnMic.addEventListener('click', () => { isRecording ? stopRecording() : startRecording(); });
 
     function hideEmptyState() { if (chatEmpty) chatEmpty.style.display = 'none'; btnReport.disabled = false; }
-    function addMessage(role, content) {
-      hideEmptyState(); messages.push({ role, content, time: formatTime() });
-      const wrapper = document.createElement('div'); wrapper.className = 'message ' + role;
-      const bubble = document.createElement('div'); bubble.className = 'bubble';
-      if (role === 'ai') bubble.innerHTML = content; else bubble.textContent = content;
-      wrapper.appendChild(bubble);
-      if (role === 'ai') {
-        const actions = document.createElement('div'); actions.className = 'msg-actions';
-        const btn = document.createElement('button'); btn.className = 'btn-play'; btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5,3 19,12 5,21"/></svg> 播放';
-        btn.addEventListener('click', () => speak(stripHTML(content), btn));
-        actions.appendChild(btn);
-        const time = document.createElement('span'); time.className = 'msg-time'; time.textContent = formatTime();
-        actions.appendChild(time); wrapper.appendChild(actions);
-      }
-      chat.appendChild(wrapper); chat.scrollTop = chat.scrollHeight; saveToday();
-    }
-
-    function speak(text, btn) {
-      if (!('speechSynthesis' in window)) return;
-      if (speechSynthesis.speaking) { speechSynthesis.cancel(); btn.classList.remove('playing'); return; }
-      if (!speechWarmedUp) warmUpSpeech();
-      let voice = getSelectedVoice();
-      const utterance = new SpeechSynthesisUtterance(text); utterance.lang = voice ? voice.lang : 'en-US'; utterance.rate = 0.9;
-      if (voice) utterance.voice = voice;
-      btn.classList.add('playing'); utterance.onend = () => btn.classList.remove('playing'); utterance.onerror = () => btn.classList.remove('playing');
-      speechSynthesis.speak(utterance);
-    }
-
+    function addMessage(role, content) { hideEmptyState(); messages.push({ role, content, time: formatTime() }); const wrapper = document.createElement('div'); wrapper.className = 'message ' + role; const bubble = document.createElement('div'); bubble.className = 'bubble'; if (role === 'ai') bubble.innerHTML = content; else bubble.textContent = content; wrapper.appendChild(bubble); if (role === 'ai') { const actions = document.createElement('div'); actions.className = 'msg-actions'; const btn = document.createElement('button'); btn.className = 'btn-play'; btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5,3 19,12 5,21"/></svg> 播放'; btn.addEventListener('click', () => speak(stripHTML(content), btn)); actions.appendChild(btn); const time = document.createElement('span'); time.className = 'msg-time'; time.textContent = formatTime(); actions.appendChild(time); wrapper.appendChild(actions); } chat.appendChild(wrapper); chat.scrollTop = chat.scrollHeight; saveToday(); }
+    function speak(text, btn) { if (!('speechSynthesis' in window)) return; if (speechSynthesis.speaking) { speechSynthesis.cancel(); btn.classList.remove('playing'); return; } if (!speechWarmedUp) warmUpSpeech(); let voice = getSelectedVoice(); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = voice ? voice.lang : 'en-US'; utterance.rate = 0.9; if (voice) utterance.voice = voice; btn.classList.add('playing'); utterance.onend = () => btn.classList.remove('playing'); utterance.onerror = () => btn.classList.remove('playing'); speechSynthesis.speak(utterance); }
     function showTyping() { hideEmptyState(); const el = document.createElement('div'); el.className = 'typing'; el.id = 'typing'; el.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>'; chat.appendChild(el); chat.scrollTop = chat.scrollHeight; }
     function hideTyping() { const el = document.getElementById('typing'); if (el) el.remove(); }
 
-    /* ── 重试机制增强版的 API 请求 ── */
-    const SYSTEM_PROMPT = `你是一名严格精准的英语陪练（English Coach）。你只有一个任务：将用户的中英混杂句子重写为地道全英文，并且**无一例外**地为每一个修正点加上 HTML 标签。
-## 必须遵守的规则（违反即为失败）
-1. **中文翻译标记**：用户用中文表达的词，必须用 <span class="hl-word">翻译</span> 包裹。
-2. **语法修正标记**：用户的错误，必须用 <span class="hl-error">正确形式</span> 包裹。
-3. 双重标记：一句话中两者必须同时兼顾。
-4. 纯输出：只返回带标签的一句英文。不得添加解释。
-示例：
-用户："我 yesterday meet a 非常有趣 person"
-回复：<span class="hl-word">Yesterday</span> I <span class="hl-error">met</span> a <span class="hl-word">very interesting</span> person.`;
+    const SYSTEM_PROMPT = `你是一名严格精准的英语陪练。将用户的中英混杂句子重写为地道全英文，无例外加上HTML标签。1. 中文翻译标记 <span class="hl-word">翻译</span> 2. 语法修正标记 <span class="hl-error">正确形式</span>。只返回带标签的英文，不得有任何解释。`;
 
     async function callDeepSeek(userMessage) {
       const conversation = messages.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.role === 'ai' ? stripHTML(m.content) : m.content }));
-      const body = {
-        model: MODEL,
-        messages: [ { role: 'system', content: SYSTEM_PROMPT }, ...conversation.slice(-8), { role: 'user', content: userMessage } ],
-        temperature: 0.7, max_tokens: 512
-      };
-
-      let attempts = 0;
-      let lastError = null;
-
-      // 自动重试 3 次逻辑
+      const body = { model: MODEL, messages: [ { role: 'system', content: SYSTEM_PROMPT }, ...conversation.slice(-8), { role: 'user', content: userMessage } ], temperature: 0.7, max_tokens: 512 };
+      let attempts = 0; let lastError = null;
       while (attempts < 3) {
         try {
-          const res = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getApiKey()}` },
-            body: JSON.stringify(body)
-          });
+          const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getApiKey()}` }, body: JSON.stringify(body) });
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          
           const data = await res.json();
-          // 修复：严谨判断 data.choices 是否存在，防止 null 报错崩溃
-          if (!data || !data.choices || !data.choices[0] || !data.choices[0].message) {
-            throw new Error('API 数据格式异常');
-          }
+          if (!data || !data.choices || !data.choices[0] || !data.choices[0].message) throw new Error('API 数据异常');
           return sanitizeHTML(data.choices[0].message.content || '');
-        } catch (err) {
-          lastError = err;
-          attempts++;
-          if (attempts < 3) {
-            await new Promise(r => setTimeout(r, 1000)); // 间隔 1 秒重试
-          }
-        }
+        } catch (err) { lastError = err; attempts++; if (attempts < 3) await new Promise(r => setTimeout(r, 1000)); }
       }
-      throw lastError; // 3次失败后彻底抛出错误
+      throw lastError;
     }
 
     async function send() {
-      checkDayReset(); // 每次发送前检查是否跨天
+      checkDayReset();
       const text = inputBox.value.trim();
       if (!text || isLoading) return;
-
       addMessage('user', text);
       inputBox.value = ''; inputBox.style.height = 'auto'; btnSend.disabled = true; isLoading = true;
       finalTranscript = ''; if (isRecording) stopRecording();
       showTyping();
-
-      try {
-        const reply = await callDeepSeek(text);
-        hideTyping();
-        addMessage('ai', reply);
-      } catch (err) {
-        hideTyping();
-        // 友好的中文防崩溃报错
-        const errMsg = '当前 AI 服务器拥挤或网络连接失败，请稍后再试。';
-        const wrapper = document.createElement('div'); wrapper.className = 'message ai';
-        const bubble = document.createElement('div'); bubble.className = 'bubble';
-        bubble.style.background = '#FEF2F2'; bubble.style.color = '#DC2626'; bubble.style.fontSize = '14px';
-        bubble.textContent = errMsg;
-        wrapper.appendChild(bubble); chat.appendChild(wrapper); chat.scrollTop = chat.scrollHeight;
-      } finally {
-        isLoading = false; btnSend.disabled = inputBox.value.trim() === '';
-      }
+      try { const reply = await callDeepSeek(text); hideTyping(); addMessage('ai', reply); } 
+      catch (err) { hideTyping(); const wrapper = document.createElement('div'); wrapper.className = 'message ai'; const bubble = document.createElement('div'); bubble.className = 'bubble'; bubble.style.background = '#FEF2F2'; bubble.style.color = '#DC2626'; bubble.style.fontSize = '14px'; bubble.textContent = '当前 AI 服务器拥挤或网络连接失败，请稍后再试。'; wrapper.appendChild(bubble); chat.appendChild(wrapper); chat.scrollTop = chat.scrollHeight; } 
+      finally { isLoading = false; btnSend.disabled = inputBox.value.trim() === ''; }
     }
 
     btnSend.addEventListener('click', send);
     inputBox.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!btnSend.disabled) send(); } });
 
-    /* ── 生成报告 (同样加上重试机制) ── */
-    const REPORT_SYSTEM_PROMPT = `分析用户对话情况，严格返回以下 JSON 格式：
-{"score": 85, "vocabulary": [{"word":"单词","pos":"v.","meaning":"意思"}], "corrections": [{"original":"错","correct":"对","explanation":"解释"}], "summary":"中文评价"}`;
-
+    const REPORT_SYSTEM_PROMPT = `分析用户对话情况，严格返回以下 JSON 格式：{"score": 85, "vocabulary": [{"word":"单词","pos":"v.","meaning":"意思"}], "corrections": [{"original":"错","correct":"对","explanation":"解释"}], "summary":"中文评价"}`;
     async function callDeepSeekReport(conversation) {
-      const body = {
-        model: MODEL,
-        messages: [ { role: 'system', content: REPORT_SYSTEM_PROMPT }, { role: 'user', content: JSON.stringify(conversation) } ],
-        temperature: 0.5, max_tokens: 1024
-      };
-
+      const body = { model: MODEL, messages: [ { role: 'system', content: REPORT_SYSTEM_PROMPT }, { role: 'user', content: JSON.stringify(conversation) } ], temperature: 0.5, max_tokens: 1024 };
       let attempts = 0;
       while (attempts < 3) {
         try {
@@ -1023,11 +296,7 @@
           if (!data || !data.choices || !data.choices[0]) throw new Error('API error');
           let json = (data.choices[0].message.content || '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
           return JSON.parse(json);
-        } catch (err) {
-          attempts++;
-          if (attempts < 3) await new Promise(r => setTimeout(r, 1000));
-          else throw new Error('服务器拥挤，生成失败。请稍后再试。');
-        }
+        } catch (err) { attempts++; if (attempts < 3) await new Promise(r => setTimeout(r, 1000)); else throw new Error('服务器拥挤，生成失败。请稍后再试。'); }
       }
     }
 
@@ -1037,24 +306,15 @@
       (async () => {
         try {
           const data = await callDeepSeekReport(messages.map(m=>({role:m.role, content:stripHTML(m.content)})));
-          saveReportToToday(data);
-          reportLoading.style.display = 'none'; reportContent.style.display = 'block';
-          reportContent.innerHTML = `
-            <div class="score-section"><div class="score-circle" style="--score-pct:${data.score}"><span class="score-num">${data.score}</span></div><div class="score-summary">${escapeHTML(data.summary)}</div></div>
-            ${data.vocabulary?.length ? `<div class="report-section"><div class="report-section-title">📝生词</div>${data.vocabulary.map(v=>`<div class="vocab-card"><div><div class="vocab-word">${escapeHTML(v.word)}</div></div><div class="vocab-meaning">${escapeHTML(v.meaning)}</div></div>`).join('')}</div>` : ''}
-            ${data.corrections?.length ? `<div class="report-section"><div class="report-section-title">🔍诊断</div>${data.corrections.map(c=>`<div class="corr-card"><div class="corr-original">${escapeHTML(c.original)}</div><div class="corr-correct">${escapeHTML(c.correct)}</div><div class="corr-explain">${escapeHTML(c.explanation)}</div></div>`).join('')}</div>` : ''}`;
-        } catch (err) {
-          reportLoading.innerHTML = `<div style="text-align:center;color:#DC2626">${err.message}</div><button onclick="document.getElementById('sheetOverlay').style.display='none'">关闭</button>`;
-        }
+          saveReportToToday(data); reportLoading.style.display = 'none'; reportContent.style.display = 'block';
+          reportContent.innerHTML = `<div class="score-section"><div class="score-circle" style="--score-pct:${data.score}"><span class="score-num">${data.score}</span></div><div class="score-summary">${escapeHTML(data.summary)}</div></div>${data.vocabulary?.length ? `<div class="report-section"><div class="report-section-title">📝生词</div>${data.vocabulary.map(v=>`<div class="vocab-card"><div><div class="vocab-word">${escapeHTML(v.word)}</div></div><div class="vocab-meaning">${escapeHTML(v.meaning)}</div></div>`).join('')}</div>` : ''}${data.corrections?.length ? `<div class="report-section"><div class="report-section-title">🔍诊断</div>${data.corrections.map(c=>`<div class="corr-card"><div class="corr-original">${escapeHTML(c.original)}</div><div class="corr-correct">${escapeHTML(c.correct)}</div><div class="corr-explain">${escapeHTML(c.explanation)}</div></div>`).join('')}</div>` : ''}`;
+        } catch (err) { reportLoading.innerHTML = `<div style="text-align:center;color:#DC2626">${err.message}</div><button onclick="document.getElementById('sheetOverlay').style.display='none'">关闭</button>`; }
       })();
     });
     btnCloseReport.addEventListener('click', () => { sheetOverlay.style.display = 'none'; });
 
-    /* ── 历史记录 (不受影响，随时可以看旧记录) ── */
     btnHistory.addEventListener('click', () => {
-      checkDayReset();
-      historyView.classList.add('open');
-      const keys = getAllDayKeys();
+      checkDayReset(); historyView.classList.add('open'); const keys = getAllDayKeys();
       if (!keys.length) { historyList.innerHTML = '<div class="history-empty">暂无记录</div>'; return; }
       historyList.innerHTML = keys.map(k => {
         const day = loadDay(k); if(!day)return'';
@@ -1062,14 +322,14 @@
       }).join('');
     });
     btnBack.addEventListener('click', () => historyView.classList.remove('open'));
-
     window.openDetail = function(key) {
-      const day = loadDay(key); if(!day)return;
-      detailDate.textContent = key;
+      const day = loadDay(key); if(!day)return; detailDate.textContent = key;
       detailBody.innerHTML = '<div class="detail-chat-log">' + (day.messages||[]).map(m=>`<div class="detail-msg ${m.role}">${m.role==='ai'?m.content:escapeHTML(stripHTML(m.content))}</div>`).join('') + '</div>';
       detailOverlay.style.display = 'flex';
     };
     btnCloseDetail.addEventListener('click', () => detailOverlay.style.display = 'none');
+
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').catch(() => {}); }
   </script>
 </body>
 </html>
