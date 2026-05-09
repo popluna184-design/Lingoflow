@@ -189,7 +189,6 @@
 
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkDayReset(); });
 
-    // 完美修复：先加载今天已有数据，再挂载检查
     (function initFromStorage() {
       const todayData = loadDay(todayKey());
       if (todayData && todayData.messages && todayData.messages.length) {
@@ -232,8 +231,26 @@
     function escapeHTML(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
     function formatTime() { const d = new Date(); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
     function stripHTML(html) { const doc = new DOMParser().parseFromString(html, 'text/html'); return doc.body.textContent || ''; }
-    function sanitizeHTML(html) { let text = html.replace(/```html\s*/gi, '').replace(/
-```\s*/g, '').trim(); const doc = new DOMParser().parseFromString(text, 'text/html'); function walk(node) { const allowed = []; for (const child of node.childNodes) { if (child.nodeType === Node.TEXT_NODE) allowed.push(document.createTextNode(child.textContent)); else if (child.nodeType === Node.ELEMENT_NODE) { if (child.tagName === 'SPAN' && (child.classList.contains('hl-word') || child.classList.contains('hl-error'))) { const span = document.createElement('span'); span.className = child.className; span.append(...walk(child)); allowed.push(span); } else allowed.push(...walk(child)); } } return allowed; } const container = document.createElement('div'); container.append(...walk(doc.body)); return container.innerHTML; }
+
+    /* ── 完美的正则替换，避开由于斜杠引发的灾难 ── */
+    function sanitizeHTML(html) {
+      let text = html.replace(/```html\s{0,}/gi, '').replace(/```\s{0,}/g, '').trim();
+      const doc = new DOMParser().parseFromString(text, 'text/html');
+      function walk(node) {
+        const allowed = [];
+        for (const child of node.childNodes) {
+          if (child.nodeType === Node.TEXT_NODE) allowed.push(document.createTextNode(child.textContent));
+          else if (child.nodeType === Node.ELEMENT_NODE) {
+            if (child.tagName === 'SPAN' && (child.classList.contains('hl-word') || child.classList.contains('hl-error'))) {
+              const span = document.createElement('span'); span.className = child.className; span.append(...walk(child)); allowed.push(span);
+            } else allowed.push(...walk(child));
+          }
+        }
+        return allowed;
+      }
+      const container = document.createElement('div'); container.append(...walk(doc.body)); return container.innerHTML;
+    }
+
     inputBox.addEventListener('input', () => { inputBox.style.height = 'auto'; inputBox.style.height = Math.min(inputBox.scrollHeight, 100) + 'px'; btnSend.disabled = inputBox.value.trim() === '' || isLoading; });
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -294,7 +311,9 @@
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const data = await res.json();
           if (!data || !data.choices || !data.choices[0]) throw new Error('API error');
-          let json = (data.choices[0].message.content || '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+          /* 同步修改这里的正则避免错误 */
+          let json = (data.choices[0].message.content || '').replace(/```json\s{0,}/gi, '').replace(/
+```\s{0,}/g, '').trim();
           return JSON.parse(json);
         } catch (err) { attempts++; if (attempts < 3) await new Promise(r => setTimeout(r, 1000)); else throw new Error('服务器拥挤，生成失败。请稍后再试。'); }
       }
